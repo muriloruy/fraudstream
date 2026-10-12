@@ -22,11 +22,11 @@
 
 ## 3. decision-engine (SPEC §5.5, §6.6)
 
-- [ ] 3.1 Migrations `migrations/decision/` (pending, decisions, processed_events, outbox) with index comments
-- [ ] 3.2 Pure fusion module (weights by sample size, thresholds, hard decline, reasons in plain language, config version hash); table-driven unit tests at 0.3999/0.40/0.7499/0.75 and hard-decline override
-- [ ] 3.3 Consumers for rule results and scores: upsert pending, decide when complete, write decision + delete pending + outbox in one transaction; integration tests for both arrival orders and duplicate parts
-- [ ] 3.4 Timeout sweeper (250 ms, `SKIP LOCKED`, `partial = true`, REVIEW when rules missing, late parts ignored); integration test with only one part
-- [ ] 3.5 Metrics `decision_latency_seconds` and `decisions_total{decision}`; verify on `/metrics`
+- [x] 3.1 Migrations `migrations/decision/` (pending, decisions, processed_events, outbox) with index comments
+- [x] 3.2 Pure fusion module (weights by sample size, thresholds, hard decline, reasons in plain language, config version hash); table-driven unit tests at 0.3999/0.40/0.7499/0.75 and hard-decline override
+- [x] 3.3 Consumers for rule results and scores: upsert pending, decide when complete, write decision + delete pending + outbox in one transaction; integration tests for both arrival orders and duplicate parts
+- [x] 3.4 Timeout sweeper (250 ms, `SKIP LOCKED`, `partial = true`, REVIEW when rules missing, late parts ignored); integration test with only one part
+- [x] 3.5 Metrics `decision_latency_seconds` and `decisions_total{decision}`; verify on `/metrics`
 - [ ] 3.6 Add service and relay to compose; verify decisions on `fraud.decisions.v1`
 
 ## 4. Transaction status (SPEC §3.3 step 8)
