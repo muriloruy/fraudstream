@@ -1,0 +1,17 @@
+{
+  "name": "@fraudstream/e2e-tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "End-to-end tests against the running compose stack (SPEC §13.4)",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
+  },
+  "devDependencies": {
+    "@fraudstream/contracts": "workspace:*",
+    "pg": "8.23.1"
+  }
+}

@@ -35,3 +35,13 @@ export const sharedIntegrationConfig = defineConfig({
     fileParallelism: false,
   },
 });
+
+/** End-to-end tests (`*.e2e.test.ts`) run against the compose stack started beforehand. */
+export const sharedE2eConfig = defineConfig({
+  test: {
+    include: ['src/**/*.e2e.test.ts'],
+    environment: 'node',
+    testTimeout: 60_000,
+    fileParallelism: false,
+  },
+});

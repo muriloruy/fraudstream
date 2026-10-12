@@ -452,6 +452,15 @@ importers:
         specifier: 12.2.0
         version: 12.2.0
 
+  tests/e2e:
+    devDependencies:
+      '@fraudstream/contracts':
+        specifier: workspace:*
+        version: link:../../libs/contracts
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+
   tests/security:
     devDependencies:
       '@fraudstream/contracts':

@@ -9,7 +9,7 @@
 - [x] 1.5 Profiles consumer for `accounts.profiles.v1` (upsert/tombstone); integration test for upsert and delete
 - [x] 1.6 Transaction consumer: evaluate, insert activity + known merchant + outbox `FraudRulesEvaluated` in one transaction via M2 runtime; integration test for duplicate delivery → one result
 - [x] 1.7 Activity cleanup job (> 30 days) and blocklist seed; integration test with backdated rows
-- [ ] 1.8 Add service and its outbox relay to compose; verify results appear on `fraud.rule-results.v1`
+- [x] 1.8 Add service and its outbox relay to compose; verify results appear on `fraud.rule-results.v1`
 
 ## 2. anomaly-scorer (SPEC §5.4, §6.5)
 
@@ -18,7 +18,7 @@
 - [x] 2.3 Transaction consumer: score with prior baseline, then update baseline `FOR UPDATE`, store contribution, publish `AnomalyScored` via outbox; integration test for duplicate → sample size +1
 - [x] 2.4 Feedback consumer for `fraud.analyst-feedback.v1` reverting confirmed-fraud contributions; integration test compares with baseline computed without that transaction
 - [x] 2.5 Document scoring parameters and feedback strategy in `docs/model.md`
-- [ ] 2.6 Add service and relay to compose; verify scores appear on `fraud.scores.v1`
+- [x] 2.6 Add service and relay to compose; verify scores appear on `fraud.scores.v1`
 
 ## 3. decision-engine (SPEC §5.5, §6.6)
 
@@ -27,7 +27,7 @@
 - [x] 3.3 Consumers for rule results and scores: upsert pending, decide when complete, write decision + delete pending + outbox in one transaction; integration tests for both arrival orders and duplicate parts
 - [x] 3.4 Timeout sweeper (250 ms, `SKIP LOCKED`, `partial = true`, REVIEW when rules missing, late parts ignored); integration test with only one part
 - [x] 3.5 Metrics `decision_latency_seconds` and `decisions_total{decision}`; verify on `/metrics`
-- [ ] 3.6 Add service and relay to compose; verify decisions on `fraud.decisions.v1`
+- [x] 3.6 Add service and relay to compose; verify decisions on `fraud.decisions.v1`
 
 ## 4. Transaction status (SPEC §3.3 step 8)
 
@@ -35,7 +35,7 @@
 
 ## 5. End-to-end and docs
 
-- [ ] 5.1 E2E test (compose up + small test producer): `card_testing` burst for one account → `DECLINED` via API within 3 s (SPEC §13.4); add to CI `e2e` job (main and PRs labeled `e2e`)
+- [x] 5.1 E2E test (compose up + small test producer): `card_testing` burst for one account → `DECLINED` via API within 3 s (SPEC §13.4); add to CI `e2e` job (main and PRs labeled `e2e`)
 - [ ] 5.2 Contract tests: producer fixtures of `FraudRulesEvaluated`, `AnomalyScored`, `FraudDecisionMade` validated against consumer schemas; add CI `contracts` job (SPEC §13.3)
 - [ ] 5.3 Write ADR-005 (asynchronous 202 vs synchronous authorization, request/reply alternative)
 
