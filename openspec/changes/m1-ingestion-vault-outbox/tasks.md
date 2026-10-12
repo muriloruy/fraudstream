@@ -21,16 +21,16 @@
 
 ## 3. transaction-api ingestion (SPEC §3.3, §5.1, §6.1)
 
-- [ ] 3.1 Migrations `migrations/payments/`: partitioned `transactions` with monthly partitions helper, indexes with query comments, `idempotency_keys`, `outbox` (SPEC §4.5), `api_keys` (hashed); verify `\d+ payments.transactions` shows partitions and indexes
-- [ ] 3.2 Scaffold `apps/transaction-api` (helmet, CORS allow-list, 16 KB body limit, RFC 9457 exception filter, pino with redaction); unit test of the filter output shape and absence of stack traces
-- [ ] 3.3 Request schema + Zod validation pipe (unknown fields rejected, Luhn, CVV, amount, currency, country, MCC); table-driven unit tests for each rule and boundary (1,000,000.00 ok, 1,000,000.01 rejected)
-- [ ] 3.4 API-key guard against hashed keys + seed script for a demo key; integration test for 401 on missing/invalid key
-- [ ] 3.5 Vault client with timeout and 503 mapping; CVV dropped after simulated check; unit test that the CVV/PAN are not kept on the domain object
-- [ ] 3.6 Application service: idempotency flow (stored response / 409 / 422), transaction + outbox `TransactionAuthorizationRequested` + idempotency response in one DB transaction, IP/device hashing with pepper; integration tests for replay, 422, 409 and rollback leaving no rows
-- [ ] 3.7 `GET /v1/transactions/:id` and `/health/live`, `/health/ready` (DB + Kafka metadata); integration tests for 200, 404 and readiness 503 with DB down
-- [ ] 3.8 Rate limiting with `@nestjs/throttler` keyed by API key (100/min POST); integration test for 429 on the 101st request
-- [ ] 3.9 Add `transaction-api` to compose with port and env; verify a `curl` POST from the README returns 202
-- [ ] 3.10 Write ADR-009 (money representation)
+- [x] 3.1 Migrations `migrations/payments/`: partitioned `transactions` with monthly partitions helper, indexes with query comments, `idempotency_keys`, `outbox` (SPEC §4.5), `api_keys` (hashed); verify `\d+ payments.transactions` shows partitions and indexes
+- [x] 3.2 Scaffold `apps/transaction-api` (helmet, CORS allow-list, 16 KB body limit, RFC 9457 exception filter, pino with redaction); unit test of the filter output shape and absence of stack traces
+- [x] 3.3 Request schema + Zod validation pipe (unknown fields rejected, Luhn, CVV, amount, currency, country, MCC); table-driven unit tests for each rule and boundary (1,000,000.00 ok, 1,000,000.01 rejected)
+- [x] 3.4 API-key guard against hashed keys + seed script for a demo key; integration test for 401 on missing/invalid key
+- [x] 3.5 Vault client with timeout and 503 mapping; CVV dropped after simulated check; unit test that the CVV/PAN are not kept on the domain object
+- [x] 3.6 Application service: idempotency flow (stored response / 409 / 422), transaction + outbox `TransactionAuthorizationRequested` + idempotency response in one DB transaction, IP/device hashing with pepper; integration tests for replay, 422, 409 and rollback leaving no rows
+- [x] 3.7 `GET /v1/transactions/:id` and `/health/live`, `/health/ready` (DB + Kafka metadata); integration tests for 200, 404 and readiness 503 with DB down
+- [x] 3.8 Rate limiting with `@nestjs/throttler` keyed by API key (100/min POST); integration test for 429 on the 101st request
+- [x] 3.9 Add `transaction-api` to compose with port and env; verify a `curl` POST from the README returns 202
+- [x] 3.10 Write ADR-009 (money representation)
 
 ## 4. outbox-relay (SPEC §4.5, §6.3)
 

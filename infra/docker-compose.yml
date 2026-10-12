@@ -190,6 +190,36 @@ services:
       retries: 12
       start_period: 15s
 
+  # Public authorization API (SPEC §6.1).
+  transaction-api:
+    <<: *app
+    image: fraudstream/transaction-api:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: transaction-api, MIGRATIONS: payments }
+    ports: ['3000:3000']
+    environment:
+      <<: *app-env
+      PORT: '3000'
+      VAULT_URL: http://card-vault:3001
+    depends_on:
+      postgres: { condition: service_healthy }
+      card-vault: { condition: service_healthy }
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
 volumes:
   kafka-1-data:
   kafka-2-data:

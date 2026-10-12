@@ -22,7 +22,8 @@
     "db:migrate": "tsx --conditions=@fraudstream/source scripts/db-migrate.ts",
     "test:integration": "nx run-many -t test:integration",
     "env:init": "tsx scripts/env-init.ts",
-    "vault:rotate": "pnpm --filter @fraudstream/card-vault rotate"
+    "vault:rotate": "pnpm --filter @fraudstream/card-vault rotate",
+    "apikey:create": "pnpm --filter @fraudstream/transaction-api apikey:create"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
