@@ -41,8 +41,8 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green including `integration`, `contracts`, `e2e`
-- [ ] 6.2 Tick every M3 acceptance item in SPEC §17
+- [x] 6.1 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green including `integration`, `contracts`, `e2e`
+- [x] 6.2 Tick every M3 acceptance item in SPEC §17
 
 ## Workflow follow-up
 
