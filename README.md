@@ -11,10 +11,12 @@ Real-time payment fraud detection platform: event-driven microservices on **Kafk
 
 ## Status
 
-| Milestone | Scope                                                 | State       |
-| --------- | ----------------------------------------------------- | ----------- |
-| M0        | Monorepo, local Kafka + Postgres, event contracts, CI | in progress |
-| M1–M8     | See SPEC §17                                          | planned     |
+| Milestone | Scope                                                   | State     |
+| --------- | ------------------------------------------------------- | --------- |
+| M0        | Monorepo, local Kafka + Postgres, event contracts, CI   | done      |
+| M1        | Ingestion API, card vault, transactional outbox         | done      |
+| M2        | Kafka consumer library: idempotency, retry, DLQ, replay | in review |
+| M3–M8     | See SPEC §17                                            | planned   |
 
 ## Architecture
 

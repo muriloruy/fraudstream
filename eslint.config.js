@@ -48,13 +48,18 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.test.ts'],
+    files: ['**/*.test.ts', '**/__fixtures__/**/*.ts'],
     rules: {
       // Test fixtures are read from known, repository-local paths.
       'security/detect-non-literal-fs-filename': 'off',
       // Tests index fixtures with typed, literal keys; the rule cannot see that.
       'security/detect-object-injection': 'off',
     },
+  },
+  {
+    // CLI scripts read and write fixed paths inside the repository.
+    files: ['scripts/**/*.ts'],
+    rules: { 'security/detect-non-literal-fs-filename': 'off' },
   },
   {
     files: ['**/*.js'],

@@ -1,5 +1,5 @@
-import { createEnvelope, EventHeaders, Topics, uuidv7 } from '@fraudstream/contracts';
-import { createProducer, eventHeaders, sendMessages } from '@fraudstream/kafka';
+import { Topics } from '@fraudstream/contracts';
+
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { readAll, startKafka, startPostgres, type TestKafka, type TestPostgres } from './index.js';
@@ -33,28 +33,26 @@ describe('startPostgres', () => {
 });
 
 describe('startKafka', () => {
-  it('round-trips a message with all seven standard headers (SPEC §4.2)', async () => {
-    const envelope = createEnvelope({
-      eventType: 'Test',
-      eventVersion: 1,
-      producer: 'test',
-      correlationId: uuidv7(),
-      causationId: uuidv7(),
-      payload: { hello: 1 },
-    });
-    const headers = eventHeaders(envelope);
-    const producer = createProducer(kafka.kafka);
+  it('creates catalogued topics and round-trips a keyed message', async () => {
+    const admin = kafka.kafka.admin();
+    await admin.connect();
+    expect(await admin.listTopics()).toContain(Topics.transactions);
+    await admin.disconnect();
+
+    const producer = kafka.kafka.producer();
     await producer.connect();
-    await sendMessages(producer, Topics.transactions, [
-      { key: 'acc_1', value: JSON.stringify(envelope), headers },
-    ]);
+    await producer.send({
+      topic: Topics.transactions,
+      messages: [{ key: 'acc_1', value: '{"hello":1}', headers: { 'event-id': 'e1' } }],
+    });
     await producer.disconnect();
     const messages = await readAll(kafka.kafka, [Topics.transactions]);
-    expect(messages).toHaveLength(1);
-    expect(messages[0]?.key).toBe('acc_1');
-    expect(messages[0]?.headers).toEqual(headers);
-    expect(Object.keys(messages[0]?.headers ?? {}).sort()).toEqual(
-      Object.values(EventHeaders).sort(),
-    );
+    expect(messages).toEqual([
+      expect.objectContaining({
+        key: 'acc_1',
+        value: '{"hello":1}',
+        headers: { 'event-id': 'e1' },
+      }),
+    ]);
   });
 });
