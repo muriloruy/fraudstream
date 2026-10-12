@@ -9,7 +9,8 @@ export const sharedTestConfig = defineConfig({
   ssr: { resolve: { conditions: SOURCE_CONDITIONS } },
   test: {
     include: ['src/**/*.test.ts'],
-    exclude: ['src/**/*.int.test.ts'],
+    // Integration and end-to-end suites need containers or the compose stack: own configs.
+    exclude: ['src/**/*.int.test.ts', 'src/**/*.e2e.test.ts'],
     environment: 'node',
     coverage: {
       provider: 'v8',
