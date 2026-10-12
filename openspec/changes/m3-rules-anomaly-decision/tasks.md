@@ -13,11 +13,11 @@
 
 ## 2. anomaly-scorer (SPEC §5.4, §6.5)
 
-- [ ] 2.1 Migrations `migrations/anomaly/` (account_baselines, contributions, known_merchants, processed_events, outbox); verify migration applies
-- [ ] 2.2 Pure EWMA/z-score/logistic module and features; unit tests against a reference implementation (fixed sequences, tolerance 1e-9) and cold-start defaults by risk tier
-- [ ] 2.3 Transaction consumer: score with prior baseline, then update baseline `FOR UPDATE`, store contribution, publish `AnomalyScored` via outbox; integration test for duplicate → sample size +1
-- [ ] 2.4 Feedback consumer for `fraud.analyst-feedback.v1` reverting confirmed-fraud contributions; integration test compares with baseline computed without that transaction
-- [ ] 2.5 Document scoring parameters and feedback strategy in `docs/model.md`
+- [x] 2.1 Migrations `migrations/anomaly/` (account_baselines, contributions, known_merchants, processed_events, outbox); verify migration applies
+- [x] 2.2 Pure EWMA/z-score/logistic module and features; unit tests against a reference implementation (fixed sequences, tolerance 1e-9) and cold-start defaults by risk tier
+- [x] 2.3 Transaction consumer: score with prior baseline, then update baseline `FOR UPDATE`, store contribution, publish `AnomalyScored` via outbox; integration test for duplicate → sample size +1
+- [x] 2.4 Feedback consumer for `fraud.analyst-feedback.v1` reverting confirmed-fraud contributions; integration test compares with baseline computed without that transaction
+- [x] 2.5 Document scoring parameters and feedback strategy in `docs/model.md`
 - [ ] 2.6 Add service and relay to compose; verify scores appear on `fraud.scores.v1`
 
 ## 3. decision-engine (SPEC §5.5, §6.6)

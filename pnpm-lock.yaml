@@ -69,6 +69,34 @@ importers:
         specifier: 5.0.4
         version: 5.0.4(@opentelemetry/api@1.9.1)(@types/node@22.20.5)(@vitest/coverage-v8@5.0.4)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  apps/anomaly-scorer:
+    dependencies:
+      '@fraudstream/contracts':
+        specifier: workspace:*
+        version: link:../../libs/contracts
+      '@fraudstream/db':
+        specifier: workspace:*
+        version: link:../../libs/db
+      '@fraudstream/kafka':
+        specifier: workspace:*
+        version: link:../../libs/kafka
+      '@fraudstream/observability':
+        specifier: workspace:*
+        version: link:../../libs/observability
+      '@fraudstream/outbox':
+        specifier: workspace:*
+        version: link:../../libs/outbox
+      '@fraudstream/service-kit':
+        specifier: workspace:*
+        version: link:../../libs/service-kit
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@fraudstream/testing':
+        specifier: workspace:*
+        version: link:../../libs/testing
+
   apps/card-vault:
     dependencies:
       '@fraudstream/db':
