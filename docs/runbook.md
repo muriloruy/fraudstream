@@ -1,6 +1,6 @@
 # Runbook
 
-Operational procedures for the local environment. Later milestones add DLQ replay and lag handling (SPEC §17 M8).
+Operational procedures for the local environment. Lag handling is added with the observability stack (SPEC §17 M7).
 
 ## Start and stop
 
@@ -68,3 +68,22 @@ Revoke with `UPDATE payments.api_keys SET revoked_at = now() WHERE name = '<clie
 - `curl localhost:9464/metrics | grep outbox_` — `outbox_lag_rows` and `outbox_oldest_unpublished_seconds` should stay near 0.
 - Rows that failed to publish keep `attempts` and `last_error`: `SELECT id, attempts, last_error FROM payments.outbox WHERE published_at IS NULL ORDER BY id LIMIT 20`.
 - Scaling `outbox-relay-payments` is safe: one instance publishes (advisory-lock leader), the others take over if it dies.
+
+## Dead letter queues (SPEC §4.6)
+
+Each consumer group has `<topic>.<group>.dlq` (30-day retention). A message lands there when it is invalid (schema, unknown version, invariant) or still fails after 3 in-process retries and 5 retry-topic rounds. Its partition keeps flowing.
+
+1. **Inspect** in kafka-ui (<http://localhost:8080>): open the DLQ topic and read the headers `dlq-reason`, `dlq-error-message`, `original-topic`, `original-partition`, `original-offset`, `failed-at`. Or list a range without touching anything:
+
+   ```bash
+   pnpm dlq:replay --topic payments.transactions.v1.fraud-rules.dlq --from 0 --to 100 --dry-run
+   ```
+
+2. **Fix the cause** (deploy the fix, correct reference data, ...).
+3. **Replay** the range to the original topic (add `--partition <n>` to limit it to one partition):
+
+   ```bash
+   pnpm dlq:replay --topic payments.transactions.v1.fraud-rules.dlq --from 0 --to 100
+   ```
+
+   Replayed messages carry `replayed-at` and lose the `dlq-*`/`retry-*` headers. Every consumer group of the original topic receives them again; they are idempotent by `event-id`, so groups that already processed an event skip it, and replaying the same range twice is harmless.

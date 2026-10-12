@@ -24,7 +24,8 @@ import { eventHeaders } from '../headers.js';
 import { createProducer } from '../producer.js';
 import type { Producer } from '../client.js';
 import { ConsumerRuntime, on, type ConsumerRuntimeOptions } from './runtime.js';
-import { TransientError } from './errors.js';
+import { PermanentError, TransientError } from './errors.js';
+import { replayDlq } from './replay.js';
 
 let db: TestPostgres;
 let kafka: TestKafka;
@@ -354,5 +355,51 @@ describe('ConsumerRuntime', () => {
       [group],
     );
     expect(rows[0]?.n).toBe('1');
+  });
+
+  it('replays a DLQ range after the bug is fixed; dry run publishes nothing, twice is harmless', async () => {
+    const group = 'g-replay';
+    const topic = await freshTopic(group, 1);
+    const e = event('acc_9', 9);
+    await publish(topic, [e]);
+
+    let fixed = false;
+    const r = runtime(topic, group, () => {
+      if (!fixed) throw new PermanentError('invariant', 'bug in handler');
+    });
+    await r.start();
+    const dlq = dlqTopic(topic, group);
+    await waitFor(async () => (await readAll(kafka.kafka, [dlq])).length === 1);
+
+    const dry = await replayDlq({
+      kafka: kafka.kafka,
+      producer,
+      dlqTopic: dlq,
+      from: 0n,
+      to: 10n,
+      dryRun: true,
+    });
+    expect(dry).toEqual([
+      { partition: 0, offset: '0', originalTopic: topic, reason: 'invariant', replayed: false },
+    ]);
+    expect(await readAll(kafka.kafka, [topic])).toHaveLength(1);
+
+    fixed = true;
+    for (let i = 0; i < 2; i++) {
+      const done = await replayDlq({
+        kafka: kafka.kafka,
+        producer,
+        dlqTopic: dlq,
+        from: 0n,
+        to: 0n,
+      });
+      expect(done.map((x) => x.replayed)).toEqual([true]);
+    }
+    await waitFor(() => fullyCommitted(r, topic));
+    const onTopic = await readAll(kafka.kafka, [topic]);
+    expect(onTopic).toHaveLength(3);
+    expect(onTopic[2]?.headers['replayed-at']).toBeDefined();
+    expect(onTopic[2]?.headers[DlqHeaders.reason]).toBeUndefined();
+    expect((await effectsFor([e.eventId])).get(e.eventId)).toBe(1);
   });
 });

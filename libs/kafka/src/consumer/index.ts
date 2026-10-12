@@ -5,3 +5,4 @@ export * from './inbox.js';
 export * from './metrics.js';
 export * from './retry.js';
 export * from './runtime.js';
+export * from './replay.js';

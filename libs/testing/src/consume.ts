@@ -1,4 +1,6 @@
-import type { Kafka } from '@fraudstream/kafka';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
+
+type Kafka = KafkaJS.Kafka;
 
 export interface ConsumedMessage {
   topic: string;

@@ -1,7 +1,11 @@
 import { createServer } from 'node:net';
 import { allTopics, type TopicSpec } from '@fraudstream/contracts';
-import { createKafka, ensureTopics, type Kafka } from '@fraudstream/kafka';
+import confluent from '@confluentinc/kafka-javascript';
+import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
+
+// Uses the client directly (not @fraudstream/kafka) so that lib can depend on this one in tests.
+type Kafka = KafkaJS.Kafka;
 
 export interface TestKafka {
   container: StartedTestContainer;
@@ -40,8 +44,30 @@ export async function startKafka(topics: readonly TopicSpec[] = allTopics()): Pr
     .start();
 
   const brokers = [`localhost:${hostPort}`];
-  const kafka = createKafka({ brokers, clientId: 'test' });
-  await ensureTopics(kafka, topics, 1);
+  const kafka = new confluent.KafkaJS.Kafka({
+    kafkaJS: { brokers, clientId: 'test', logLevel: confluent.KafkaJS.logLevel.WARN },
+  });
+  if (topics.length > 0) {
+    const admin = kafka.admin();
+    await admin.connect();
+    try {
+      await admin.createTopics({
+        topics: topics.map((t) => ({
+          topic: t.name,
+          numPartitions: t.partitions,
+          replicationFactor: 1,
+          configEntries: [
+            { name: 'cleanup.policy', value: t.cleanupPolicy },
+            ...(t.retentionMs === null
+              ? []
+              : [{ name: 'retention.ms', value: String(t.retentionMs) }]),
+          ],
+        })),
+      });
+    } finally {
+      await admin.disconnect();
+    }
+  }
   return {
     container,
     brokers,

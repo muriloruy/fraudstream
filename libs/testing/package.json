@@ -22,10 +22,10 @@
     "test:integration": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
+    "@confluentinc/kafka-javascript": "1.11.0",
     "@fraudstream/contracts": "workspace:*",
-    "@fraudstream/kafka": "workspace:*",
-    "testcontainers": "12.2.0",
     "@testcontainers/postgresql": "12.2.0",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "testcontainers": "12.2.0"
   }
 }

@@ -30,6 +30,9 @@ x-kafka-3-broker-env: &kafka-3-broker-env
   KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: '3'
   KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: '2'
 
+# Infrastructure comes back with the Docker daemon, like the application services.
+x-restart: &restart unless-stopped
+
 x-kafka-healthcheck: &kafka-healthcheck
   test:
     [
@@ -58,6 +61,7 @@ x-app-env: &app-env
 services:
   kafka-1:
     image: *kafka-image
+    restart: *restart
     profiles: [core]
     hostname: kafka-1
     ports: ['19092:9094']
@@ -70,6 +74,7 @@ services:
 
   kafka-2:
     image: *kafka-image
+    restart: *restart
     profiles: [core]
     hostname: kafka-2
     ports: ['29092:9094']
@@ -82,6 +87,7 @@ services:
 
   kafka-3:
     image: *kafka-image
+    restart: *restart
     profiles: [core]
     hostname: kafka-3
     ports: ['39092:9094']
@@ -96,6 +102,7 @@ services:
   # and host port (19092) as the first core broker, so clients need no other config.
   kafka-lowmem:
     image: *kafka-image
+    restart: *restart
     profiles: [lowmem]
     hostname: kafka-1
     networks:
@@ -133,6 +140,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    restart: *restart
     profiles: [core, lowmem]
     ports: ['5432:5432']
     env_file:
@@ -154,6 +162,7 @@ services:
 
   kafka-ui:
     image: kafbat/kafka-ui:v1.4.2
+    restart: *restart
     profiles: [core, lowmem]
     ports: ['8080:8080']
     environment:

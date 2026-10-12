@@ -48,7 +48,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.test.ts'],
+    files: ['**/*.test.ts', '**/__fixtures__/**/*.ts'],
     rules: {
       // Test fixtures are read from known, repository-local paths.
       'security/detect-non-literal-fs-filename': 'off',
