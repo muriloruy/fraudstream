@@ -35,10 +35,10 @@
 
 ## 4. CI pipeline (SPEC §15)
 
-- [ ] 4.1 Create `.github/workflows/ci.yml` triggered on `pull_request` and `push` to `main`, with Node from `.nvmrc`, pnpm cache and `pnpm i --frozen-lockfile`; verify the workflow runs on the M0 PR
-- [ ] 4.2 Add job `lint-typecheck` (`format:check`, `nx affected -t lint typecheck` on PRs, `run-many` on `main`); verify a deliberate lint error makes the job fail
-- [ ] 4.3 Add job `unit` (`nx affected -t test --coverage`) uploading the coverage report as an artifact; verify the job passes and the artifact is attached
-- [ ] 4.4 Add Dependabot config for npm, GitHub Actions and Docker; verify the file validates in the repository insights
+- [x] 4.1 Create `.github/workflows/ci.yml` triggered on `pull_request` and `push` to `main`, with Node from `.nvmrc`, pnpm cache and `pnpm i --frozen-lockfile`; verify the workflow runs on the M0 PR
+- [x] 4.2 Add job `lint-typecheck` (`format:check`, `nx affected -t lint typecheck` on PRs, `run-many` on `main`); verify a deliberate lint error makes the job fail
+- [x] 4.3 Add job `unit` (`nx affected -t test --coverage`) uploading the coverage report as an artifact; verify the job passes and the artifact is attached
+- [x] 4.4 Add Dependabot config for npm, GitHub Actions and Docker; verify the file validates in the repository insights
 
 ## 5. Decision records (SPEC §16)
 
@@ -47,8 +47,8 @@
 ## 6. Verification
 
 - [x] 6.1 From a clean clone: `pnpm i`, `cp .env.example .env`, `docker compose --profile core up -d`, `scripts/verify-topics.sh` all succeed
-- [ ] 6.2 Run `pnpm lint && pnpm typecheck && pnpm test` and confirm all pass; confirm CI is green on the PR
-- [ ] 6.3 Check every M0 acceptance item in SPEC §17 is satisfied and tick it in the PR description
+- [x] 6.2 Run `pnpm lint && pnpm typecheck && pnpm test` and confirm all pass; confirm CI is green on the PR
+- [x] 6.3 Check every M0 acceptance item in SPEC §17 is satisfied and tick it in the PR description
 
 ## Workflow follow-up
 

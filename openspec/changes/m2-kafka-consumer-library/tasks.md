@@ -6,7 +6,8 @@
 - [ ] 1.2 Implement consumer factory (`enable.auto.commit=false`, `session.timeout.ms=30000`, `max.poll.interval.ms`, `isolation.level=read_committed`) and `eachMessage` loop committing `offset+1` after handler success; integration test proves offset not committed when handler throws
 - [ ] 1.3 Implement idempotent handler wrapper (inbox insert + handler + outbox in one DB transaction); integration test delivers the same event 3 times → one side effect (SPEC §13.2)
 - [ ] 1.4 Implement envelope/header parsing with contracts and error classification (`TransientError`/`PermanentError`); unit tests classify Zod errors, unknown versions and pg error codes
-- [ ] 1.5 Implement context propagation (`traceparent`, `correlation-id`, `causation-id`) for produced events; unit test verifies the causation chain
+- [ ] 1.5 Make the partition assignor configurable and default multi-topic join consumers to the range assignor (ADR-002); integration test with 2 instances subscribed to two co-partitioned topics asserts partition N of both topics lands on the same instance
+- [ ] 1.6 Implement context propagation (`traceparent`, `correlation-id`, `causation-id`) for produced events; unit test verifies the causation chain
 
 ## 2. Retry and DLQ (SPEC §4.6)
 
