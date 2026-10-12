@@ -1,0 +1,33 @@
+{
+  "name": "@fraudstream/fraud-rules",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Deterministic fraud rules R001-R010 with per-account context (SPEC \u00a76.4)",
+  "type": "module",
+  "files": [
+    "dist",
+    "rules.yaml"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "dev": "nx run @fraudstream/fraud-rules:build && node --env-file-if-exists=../../.env dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "@fraudstream/contracts": "workspace:*",
+    "@fraudstream/db": "workspace:*",
+    "@fraudstream/kafka": "workspace:*",
+    "@fraudstream/observability": "workspace:*",
+    "@fraudstream/outbox": "workspace:*",
+    "@fraudstream/service-kit": "workspace:*",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@fraudstream/testing": "workspace:*"
+  }
+}

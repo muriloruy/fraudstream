@@ -2,13 +2,13 @@
 
 ## 1. fraud-rules (SPEC §5.3, §6.4)
 
-- [ ] 1.1 Migrations `migrations/fraud_rules/` (account_profiles, account_activity, known_merchants, blocklist, processed_events, outbox) with index comments; verify with `pnpm db:migrate`
-- [ ] 1.2 Scaffold `apps/fraud-rules` and `rules.yaml` loader (Zod-validated, `rulesetVersion`); unit test rejects an invalid ruleset
-- [ ] 1.3 Implement R001–R010 as pure functions + haversine and score aggregation (`min(1, sum/100)`, hard decline); table-driven unit tests covering every boundary (5 vs 6 tx, 2 vs 3 small tx, 900 km/h, exactly 50% limit, 9 vs 10 history); coverage ≥ 85% on `domain/`
-- [ ] 1.4 Single-roundtrip context CTE in `infrastructure/db`; integration test asserts one query per transaction and correct aggregates on seeded data
-- [ ] 1.5 Profiles consumer for `accounts.profiles.v1` (upsert/tombstone); integration test for upsert and delete
-- [ ] 1.6 Transaction consumer: evaluate, insert activity + known merchant + outbox `FraudRulesEvaluated` in one transaction via M2 runtime; integration test for duplicate delivery → one result
-- [ ] 1.7 Activity cleanup job (> 30 days) and blocklist seed; integration test with backdated rows
+- [x] 1.1 Migrations `migrations/fraud_rules/` (account_profiles, account_activity, known_merchants, blocklist, processed_events, outbox) with index comments; verify with `pnpm db:migrate`
+- [x] 1.2 Scaffold `apps/fraud-rules` and `rules.yaml` loader (Zod-validated, `rulesetVersion`); unit test rejects an invalid ruleset
+- [x] 1.3 Implement R001–R010 as pure functions + haversine and score aggregation (`min(1, sum/100)`, hard decline); table-driven unit tests covering every boundary (5 vs 6 tx, 2 vs 3 small tx, 900 km/h, exactly 50% limit, 9 vs 10 history); coverage ≥ 85% on `domain/`
+- [x] 1.4 Single-roundtrip context CTE in `infrastructure/db`; integration test asserts one query per transaction and correct aggregates on seeded data
+- [x] 1.5 Profiles consumer for `accounts.profiles.v1` (upsert/tombstone); integration test for upsert and delete
+- [x] 1.6 Transaction consumer: evaluate, insert activity + known merchant + outbox `FraudRulesEvaluated` in one transaction via M2 runtime; integration test for duplicate delivery → one result
+- [x] 1.7 Activity cleanup job (> 30 days) and blocklist seed; integration test with backdated rows
 - [ ] 1.8 Add service and its outbox relay to compose; verify results appear on `fraud.rule-results.v1`
 
 ## 2. anomaly-scorer (SPEC §5.4, §6.5)

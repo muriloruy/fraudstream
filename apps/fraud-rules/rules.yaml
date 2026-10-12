@@ -1,0 +1,56 @@
+# Fraud ruleset (SPEC §6.4). Changing it requires a restart in v1; bump `version` on every
+# change: it is published with each result (rulesetVersion) for auditability.
+version: '2026.10.1'
+
+# Used when the account profile has not been received yet (accounts.profiles.v1).
+defaultCreditLimit: '5000.00'
+
+rules:
+  R001:
+    name: velocity_1m
+    points: 30
+    windowSeconds: 60
+    maxTransactions: 5 # fires on the 6th transaction inside the window
+  R002:
+    name: velocity_1h_amount
+    points: 25
+    windowSeconds: 3600
+    creditLimitShare: 0.5
+  R003:
+    name: amount_spike
+    points: 25
+    multiplier: 5
+    minHistory: 10
+    historyDays: 30
+  R004:
+    name: impossible_travel
+    points: 40
+    maxSpeedKmh: 900
+  R005:
+    name: foreign_country
+    points: 10
+  R006:
+    name: card_testing
+    points: 50
+    hardDecline: true
+    smallAmount: '5.00'
+    windowSeconds: 600
+    minTransactions: 3
+  R007:
+    name: new_merchant_high_amount
+    points: 20
+    amount: '2000.00'
+  R008:
+    name: blocklisted
+    points: 100
+    hardDecline: true
+  R009:
+    name: night_high_amount
+    points: 15
+    fromHour: 0
+    toHour: 5 # 00:00 to 04:59 merchant local time
+    multiplier: 3
+  R010:
+    name: over_limit
+    points: 100
+    hardDecline: true

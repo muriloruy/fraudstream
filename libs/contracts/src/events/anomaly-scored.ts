@@ -17,6 +17,8 @@ export const AnomalyScoredV1 = z.object({
   baselineSampleSize: z.number().int().nonnegative(),
   modelVersion: z.string().min(1),
   scoredAt: UtcDateTime,
+  /** Copied from the transaction so decision latency can be measured downstream (added in v1, optional). */
+  requestedAt: UtcDateTime.optional(),
 });
 export type AnomalyScoredV1 = z.infer<typeof AnomalyScoredV1>;
 
