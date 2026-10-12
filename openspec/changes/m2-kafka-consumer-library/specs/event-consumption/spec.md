@@ -38,6 +38,13 @@ Consumers SHALL log partition assignment and revocation, and finish or abandon i
 - **WHEN** two consumers share a group and one is stopped while processing
 - **THEN** all messages are processed with no loss and no duplicate side effects
 
+### Requirement: Co-located partitions for joins
+Consumers that join co-partitioned topics SHALL use range partition assignment so that partition N of every subscribed topic is owned by the same instance (ADR-002).
+
+#### Scenario: Two instances, two topics
+- **WHEN** two instances of one group subscribe to two topics with 12 partitions each
+- **THEN** for every N, partition N of both topics is assigned to the same instance
+
 ### Requirement: Graceful shutdown
 On SIGTERM a consumer SHALL stop fetching, finish the in-flight message, commit its offset, and disconnect.
 

@@ -1,0 +1,31 @@
+{
+  "name": "@fraudstream/testing",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Testcontainers fixtures for PostgreSQL and Kafka (SPEC \u00a713.2)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fraudstream/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "@fraudstream/contracts": "workspace:*",
+    "@fraudstream/kafka": "workspace:*",
+    "testcontainers": "12.2.0",
+    "@testcontainers/postgresql": "12.2.0",
+    "pg": "8.23.1"
+  }
+}

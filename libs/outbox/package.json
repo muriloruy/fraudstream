@@ -1,0 +1,34 @@
+{
+  "name": "@fraudstream/outbox",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Transactional outbox writer and relay core (SPEC \u00a74.5)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fraudstream/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "@fraudstream/contracts": "workspace:*",
+    "@fraudstream/db": "workspace:*",
+    "@fraudstream/kafka": "workspace:*",
+    "pg": "8.23.1",
+    "@fraudstream/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "@fraudstream/testing": "workspace:*"
+  }
+}

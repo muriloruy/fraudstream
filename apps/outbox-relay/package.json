@@ -1,0 +1,25 @@
+{
+  "name": "@fraudstream/outbox-relay",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Publishes a service's transactional outbox to Kafka (SPEC \u00a74.5, \u00a76.3)",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "dev": "nx run @fraudstream/outbox-relay:build && node --env-file-if-exists=../../.env dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fraudstream/db": "workspace:*",
+    "@fraudstream/kafka": "workspace:*",
+    "@fraudstream/observability": "workspace:*",
+    "@fraudstream/outbox": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

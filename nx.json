@@ -29,6 +29,10 @@
       "inputs": ["default", "^production"],
       "outputs": ["{projectRoot}/coverage"],
       "cache": true
+    },
+    "test:integration": {
+      "inputs": ["default", "^production"],
+      "cache": false
     }
   }
 }

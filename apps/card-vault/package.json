@@ -1,0 +1,50 @@
+{
+  "name": "@fraudstream/card-vault",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tokenization vault: the only component that ever sees a PAN (SPEC \u00a76.2)",
+  "type": "module",
+  "exports": {
+    "./app": {
+      "@fraudstream/source": "./src/app.ts",
+      "types": "./dist/app.d.ts",
+      "default": "./dist/app.js"
+    },
+    "./config": {
+      "@fraudstream/source": "./src/config/config.ts",
+      "types": "./dist/config/config.d.ts",
+      "default": "./dist/config/config.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "dev": "nx run @fraudstream/card-vault:build && node --env-file-if-exists=../../.env dist/main.js",
+    "rotate": "tsx --tsconfig ../../tsconfig.runtime.json --conditions=@fraudstream/source src/rotate.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "@fraudstream/db": "workspace:*",
+    "@fraudstream/http": "workspace:*",
+    "@fraudstream/observability": "workspace:*",
+    "@fraudstream/security": "workspace:*",
+    "@nestjs/common": "12.1.3",
+    "@nestjs/core": "12.1.3",
+    "@nestjs/platform-express": "12.1.3",
+    "helmet": "8.3.0",
+    "nestjs-pino": "5.3.1",
+    "pino-http": "11.0.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@fraudstream/testing": "workspace:*"
+  }
+}

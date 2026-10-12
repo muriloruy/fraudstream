@@ -72,3 +72,24 @@ jobs:
           name: coverage
           path: '**/coverage/'
           if-no-files-found: ignore
+
+  integration:
+    name: integration + security
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Pre-pull container images
+        run: |
+          docker pull postgres:16-alpine
+          docker pull apache/kafka:4.1.0
+      - name: Integration tests (Testcontainers PostgreSQL + Kafka)
+        run: pnpm exec nx run-many -t test:integration --parallel=2
+      - name: Security tests (PAN leak, SQL injection)
+        run: pnpm test:security

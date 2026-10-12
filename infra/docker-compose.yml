@@ -41,6 +41,20 @@ x-kafka-healthcheck: &kafka-healthcheck
   retries: 12
   start_period: 20s
 
+# Common settings of the application services (built from apps/, SPEC §3.1).
+x-app: &app
+  profiles: [core, lowmem]
+  env_file:
+    - path: ../.env
+      required: true
+  restart: unless-stopped
+
+x-app-env: &app-env
+  NODE_ENV: development
+  DATABASE_HOST: postgres # .env URLs point at localhost; swap only the host inside compose
+  KAFKA_BROKERS: kafka-1:9092
+  MIGRATE_ON_START: 'true'
+
 services:
   kafka-1:
     image: *kafka-image
@@ -148,6 +162,94 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'false'
     depends_on:
       init-topics: { condition: service_completed_successfully }
+
+  # The only component that ever sees a PAN. No `ports`: reachable only on the compose
+  # network, by transaction-api (SPEC §6.2).
+  card-vault:
+    <<: *app
+    image: fraudstream/card-vault:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: card-vault, MIGRATIONS: vault }
+    environment:
+      <<: *app-env
+      PORT: '3001'
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  # Public authorization API (SPEC §6.1).
+  transaction-api:
+    <<: *app
+    image: fraudstream/transaction-api:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: transaction-api, MIGRATIONS: payments }
+    ports: ['3000:3000']
+    environment:
+      <<: *app-env
+      PORT: '3000'
+      VAULT_URL: http://card-vault:3001
+    depends_on:
+      postgres: { condition: service_healthy }
+      card-vault: { condition: service_healthy }
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  # Publishes payments.outbox to Kafka (SPEC §4.5). Safe to scale: one instance publishes
+  # at a time (advisory-lock leader), the others stand by.
+  outbox-relay-payments:
+    <<: *app
+    image: fraudstream/outbox-relay:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: outbox-relay }
+    ports: ['9464:9464'] # Prometheus metrics
+    environment:
+      <<: *app-env
+      MIGRATE_ON_START: 'false'
+      RELAY_SCHEMA: payments
+      RELAY_BATCH_SIZE: '500'
+      RELAY_POLL_MS: '100'
+    depends_on:
+      transaction-api: { condition: service_healthy } # owns and migrates payments.outbox
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:9464/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
 
 volumes:
   kafka-1-data:

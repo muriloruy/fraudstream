@@ -48,19 +48,39 @@ Requirements: Node.js 22 (`.nvmrc`), pnpm 10 (`corepack enable`), Docker with Co
 
 ```bash
 pnpm i
-cp .env.example .env
-docker compose --profile core up -d --wait   # 3 Kafka brokers (KRaft) + Postgres + kafka-ui
-pnpm topics:verify                           # cluster matches the topic catalogue
-open http://localhost:8080                   # kafka-ui
+pnpm env:init                                  # .env from .env.example with fresh random keys/tokens
+docker compose --profile core up -d --build --wait   # Kafka (3 brokers, KRaft), Postgres, kafka-ui, services
+pnpm topics:verify                             # cluster matches the topic catalogue
+pnpm apikey:create demo                        # prints an API key once (only its hash is stored)
 ```
+
+Send an authorization request (SPEC §6.1):
+
+```bash
+curl -i -X POST localhost:3000/v1/transactions \
+  -H 'content-type: application/json' \
+  -H "x-api-key: $API_KEY" \
+  -H "idempotency-key: $(uuidgen)" \
+  -d '{"accountId":"acc_000123","card":{"pan":"4111111111111111","expiryMonth":12,"expiryYear":2029,"cvv":"123"},
+       "amount":{"value":"1250.90","currency":"BRL"},
+       "merchant":{"id":"mer_771","name":"Loja Exemplo","mcc":"5732","country":"BR","city":"São Paulo"},
+       "channel":"ECOMMERCE","entryMode":"CARD_NOT_PRESENT",
+       "device":{"ip":"203.0.113.10","deviceId":"d-123"},"geo":{"lat":-23.55,"lon":-46.63}}'
+# 202 {"transactionId":"…","status":"PENDING","links":{"self":"/v1/transactions/…"}}
+```
+
+The event appears on `payments.transactions.v1` in kafka-ui, keyed by `accountId`, with the vault token and the masked PAN only.
 
 Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, replication factor 1). Do not run both profiles at once.
 
-| Service      | Address                                                                             |
-| ------------ | ----------------------------------------------------------------------------------- |
-| Kafka (host) | `localhost:19092`, `localhost:29092`, `localhost:39092`                             |
-| PostgreSQL   | `localhost:5432`, database `fraudstream`, one role per service (see `.env.example`) |
-| kafka-ui     | <http://localhost:8080>                                                             |
+| Service              | Address                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| transaction-api      | <http://localhost:3000> (`/v1/transactions`, `/health/ready`)                       |
+| card-vault           | internal only (no published port)                                                   |
+| outbox-relay metrics | <http://localhost:9464/metrics>                                                     |
+| Kafka (host)         | `localhost:19092`, `localhost:29092`, `localhost:39092`                             |
+| PostgreSQL           | `localhost:5432`, database `fraudstream`, one role per service (see `.env.example`) |
+| kafka-ui             | <http://localhost:8080>                                                             |
 
 ## Development
 
@@ -68,6 +88,9 @@ Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, repl
 pnpm lint          # ESLint (typescript-eslint strict + eslint-plugin-security) on every project
 pnpm typecheck     # tsc --noEmit, strict mode
 pnpm test          # Vitest unit tests (pnpm test:coverage for coverage)
+pnpm test:integration  # Testcontainers PostgreSQL + Kafka (needs Docker)
+pnpm test:security     # PAN/CVV leak test and SQL injection payloads against the real services
+pnpm db:migrate        # apply migrations/<service> as each service's own role (services also do it at start)
 pnpm format        # Prettier
 pnpm topics:generate   # regenerate infra/kafka/topics.conf after editing libs/contracts/src/topics.ts
 ```
@@ -77,10 +100,10 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org); Husk
 ## Repository layout
 
 ```
-apps/        services (from M1)
-libs/        shared libraries — contracts (event schemas, topics)
+apps/        card-vault, transaction-api, outbox-relay
+libs/        contracts, db, kafka, outbox, http, security, observability, testing
 infra/       docker compose, Kafka topic init, Postgres roles
-migrations/  per-service SQL migrations (from M1)
+migrations/  per-service SQL migrations
 scripts/     operational scripts
 tests/       e2e, load, chaos, security suites
 docs/        SPEC, ADRs, runbook

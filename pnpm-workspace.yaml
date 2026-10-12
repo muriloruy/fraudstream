@@ -1,7 +1,15 @@
 packages:
   - apps/*
   - libs/*
+  - tests/*
 
 onlyBuiltDependencies:
   - esbuild
   - nx
+  - '@confluentinc/kafka-javascript'
+
+# Optional native accelerators of ssh2 (pulled by testcontainers); not needed.
+ignoredBuiltDependencies:
+  - cpu-features
+  - ssh2
+  - protobufjs

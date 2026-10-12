@@ -18,13 +18,21 @@
     "format:check": "prettier --check .",
     "topics:generate": "pnpm --filter @fraudstream/contracts topics:generate",
     "topics:verify": "bash scripts/verify-topics.sh",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:migrate": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/db-migrate.ts",
+    "test:integration": "nx run-many -t test:integration",
+    "env:init": "tsx --tsconfig tsconfig.runtime.json scripts/env-init.ts",
+    "vault:rotate": "pnpm --filter @fraudstream/card-vault rotate",
+    "apikey:create": "pnpm --filter @fraudstream/transaction-api apikey:create",
+    "test:security": "pnpm --filter @fraudstream/security-tests test:security"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
     "@eslint/js": "10.0.1",
+    "@fraudstream/db": "workspace:*",
     "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
     "@vitest/coverage-v8": "5.0.4",
     "eslint": "10.12.0",
     "eslint-config-prettier": "10.1.8",
