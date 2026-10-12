@@ -31,7 +31,7 @@
 
 ## 4. Transaction status (SPEC §3.3 step 8)
 
-- [ ] 4.1 Add `processed_events` to `payments` and a `transaction-api-status` consumer updating status, `final_score`, `decided_at`; integration test for idempotent update and `GET` returning the decision
+- [x] 4.1 Add `processed_events` to `payments` and a `transaction-api-status` consumer updating status, `final_score`, `decided_at`; integration test for idempotent update and `GET` returning the decision
 
 ## 5. End-to-end and docs
 

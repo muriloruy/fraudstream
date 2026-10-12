@@ -4,3 +4,5 @@ export const KAFKA = Symbol('KAFKA');
 export const TRANSACTIONS_SERVICE = Symbol('TRANSACTIONS_SERVICE');
 export const TRANSACTIONS_REPOSITORY = Symbol('TRANSACTIONS_REPOSITORY');
 export const API_KEYS_REPOSITORY = Symbol('API_KEYS_REPOSITORY');
+export const PRODUCER = Symbol('PRODUCER');
+export const STATUS_CONSUMER = Symbol('STATUS_CONSUMER');
