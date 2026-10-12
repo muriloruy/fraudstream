@@ -1,0 +1,22 @@
+# dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Nx
+.nx/
+
+# secrets: copy .env.example to .env
+.env
+.env.*
+!.env.example
+
+# simulator output (SPEC §6.9)
+simulator_output/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

@@ -1,0 +1,28 @@
+{
+  "eventId": "0192f1a2-7c40-7000-9000-000000000002",
+  "eventType": "FraudRulesEvaluated",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-12T18:00:00.050Z",
+  "producer": "fraud-rules",
+  "correlationId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+  "causationId": "0192f1a2-7c40-7000-9000-000000000001",
+  "payload": {
+    "transactionId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+    "accountId": "acc_000123",
+    "ruleScore": 0.62,
+    "hardDecline": false,
+    "firedRules": [
+      {
+        "ruleId": "R001",
+        "name": "velocity_1m",
+        "points": 30,
+        "details": {
+          "countLast60s": 7,
+          "threshold": 5
+        }
+      }
+    ],
+    "rulesetVersion": "2026.10.1",
+    "evaluatedAt": "2026-10-12T18:00:00.090Z"
+  }
+}

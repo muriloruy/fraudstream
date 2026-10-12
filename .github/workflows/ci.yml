@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NX_DAEMON: 'false'
+
+jobs:
+  lint-typecheck:
+    name: lint + typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # nx affected compares against the base branch
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: nrwl/nx-set-shas@v4
+      - name: Prettier
+        run: pnpm format:check
+      - name: Lint and typecheck (affected projects on PRs, all on main)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pnpm exec nx affected -t lint typecheck
+          else
+            pnpm exec nx run-many -t lint typecheck
+          fi
+      - name: Lint and typecheck root config files
+        run: |
+          pnpm exec eslint '*.js' '*.ts'
+          pnpm exec tsc -p tsconfig.json
+
+  unit:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: nrwl/nx-set-shas@v4
+      - name: Unit tests with coverage (affected projects on PRs, all on main)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            pnpm exec nx affected -t test -- --coverage
+          else
+            pnpm exec nx run-many -t test -- --coverage
+          fi
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: '**/coverage/'
+          if-no-files-found: ignore

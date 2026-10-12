@@ -1,0 +1,7 @@
+dist
+coverage
+.nx
+pnpm-lock.yaml
+docs/SPEC.md
+openspec
+.claude

@@ -1,0 +1,18 @@
+{
+  "eventId": "0192f1a2-7c40-7000-9000-000000000007",
+  "eventType": "AnalystFeedbackRecorded",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-12T18:00:00.050Z",
+  "producer": "alerts-gateway",
+  "correlationId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+  "causationId": "0192f1a2-7c40-7000-9000-000000000004",
+  "payload": {
+    "transactionId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+    "accountId": "acc_000123",
+    "alertId": "0192f1a2-7c42-7000-8000-0000000000bb",
+    "verdict": "CONFIRMED_FRAUD",
+    "analystId": "usr_12",
+    "note": "Customer confirmed card stolen",
+    "recordedAt": "2026-10-12T18:05:00.000Z"
+  }
+}

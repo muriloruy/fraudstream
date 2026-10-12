@@ -1,0 +1,37 @@
+{
+  "eventId": "0192f1a2-7c40-7000-9000-000000000001",
+  "eventType": "TransactionAuthorizationRequested",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-12T18:00:00.050Z",
+  "producer": "transaction-api",
+  "correlationId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+  "causationId": null,
+  "payload": {
+    "transactionId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+    "accountId": "acc_000123",
+    "cardToken": "tok_9f8cA1b2C3d4E5f6G7h8I9j0K1l2M3n4",
+    "maskedPan": "411111******1111",
+    "amount": {
+      "value": "1250.90",
+      "currency": "BRL"
+    },
+    "merchant": {
+      "id": "mer_771",
+      "name": "Loja Exemplo",
+      "mcc": "5732",
+      "country": "BR",
+      "city": "São Paulo"
+    },
+    "channel": "ECOMMERCE",
+    "entryMode": "CARD_NOT_PRESENT",
+    "device": {
+      "ipHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "deviceIdHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "geo": {
+      "lat": -23.55,
+      "lon": -46.63
+    },
+    "requestedAt": "2026-10-12T18:00:00.000Z"
+  }
+}

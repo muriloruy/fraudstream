@@ -1,0 +1,23 @@
+{
+  "eventId": "0192f1a2-7c40-7000-9000-000000000004",
+  "eventType": "FraudDecisionMade",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-12T18:00:00.050Z",
+  "producer": "decision-engine",
+  "correlationId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+  "causationId": "0192f1a2-7c40-7000-9000-000000000003",
+  "payload": {
+    "transactionId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+    "accountId": "acc_000123",
+    "decision": "REVIEW",
+    "finalScore": 0.69,
+    "components": {
+      "ruleScore": 0.62,
+      "anomalyScore": 0.81
+    },
+    "reasons": ["R001 velocity_1m", "amount 4.2σ above baseline"],
+    "partial": false,
+    "decidedAt": "2026-10-12T18:00:00.184Z",
+    "latencyMs": 184
+  }
+}

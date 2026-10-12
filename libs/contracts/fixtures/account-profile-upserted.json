@@ -1,0 +1,17 @@
+{
+  "eventId": "0192f1a2-7c40-7000-9000-000000000006",
+  "eventType": "AccountProfileUpserted",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-12T18:00:00.050Z",
+  "producer": "simulator",
+  "correlationId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+  "causationId": null,
+  "payload": {
+    "accountId": "acc_000123",
+    "homeCountry": "BR",
+    "homeCity": "São Paulo",
+    "createdAt": "2025-01-15T12:00:00.000Z",
+    "riskTier": "LOW",
+    "creditLimit": "8000.00"
+  }
+}
