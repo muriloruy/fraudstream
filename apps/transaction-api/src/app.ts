@@ -9,7 +9,7 @@ import {
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { Topics } from '@fraudstream/contracts';
+import { ConsumerGroups, FraudDecisionMade, Topics } from '@fraudstream/contracts';
 import { createPool, databaseIsReachable, type Pool } from '@fraudstream/db';
 import {
   HealthController,
@@ -17,7 +17,15 @@ import {
   READINESS_CHECKS,
   type ReadinessCheck,
 } from '@fraudstream/http';
-import { createKafka, kafkaIsReachable, type Kafka } from '@fraudstream/kafka';
+import {
+  ConsumerRuntime,
+  createKafka,
+  createProducer,
+  kafkaIsReachable,
+  on,
+  type Kafka,
+  type Producer,
+} from '@fraudstream/kafka';
 import { loggerOptions, type DestinationStream } from '@fraudstream/observability';
 import { OutboxWriter } from '@fraudstream/outbox';
 import helmet from 'helmet';
@@ -33,6 +41,8 @@ import {
   API_KEYS_REPOSITORY,
   DB_POOL,
   KAFKA,
+  PRODUCER,
+  STATUS_CONSUMER,
   TRANSACTIONS_REPOSITORY,
   TRANSACTIONS_SERVICE,
 } from './infrastructure/http/tokens.js';
@@ -49,6 +59,8 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown 
   constructor(
     @Inject(DB_POOL) private readonly pool: Pool,
     @Inject(TRANSACTIONS_REPOSITORY) private readonly transactions: TransactionsRepository,
+    @Inject(PRODUCER) private readonly producer: Producer,
+    @Inject(STATUS_CONSUMER) private readonly statusConsumer: ConsumerRuntime,
   ) {}
 
   static forRoot(config: ApiConfig, logDestination?: DestinationStream): DynamicModule {
@@ -75,6 +87,35 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown 
         {
           provide: KAFKA,
           useFactory: () => createKafka({ brokers: config.kafkaBrokers, clientId: SERVICE_NAME }),
+        },
+        {
+          provide: PRODUCER,
+          inject: [KAFKA],
+          useFactory: (kafka: Kafka) => createProducer(kafka, { 'message.timeout.ms': 15_000 }),
+        },
+        {
+          // The API owns payments.transactions, so it applies decisions to it itself
+          // (SPEC §3.3 step 8), through the idempotent consumer runtime.
+          provide: STATUS_CONSUMER,
+          inject: [DB_POOL, KAFKA, PRODUCER, TRANSACTIONS_REPOSITORY],
+          useFactory: (
+            pool: Pool,
+            kafka: Kafka,
+            producer: Producer,
+            transactions: TransactionsRepository,
+          ) =>
+            new ConsumerRuntime({
+              kafka,
+              pool,
+              producer,
+              group: ConsumerGroups.transactionApiStatus,
+              schema: 'payments',
+              handlers: [
+                on(FraudDecisionMade, async (envelope, ctx) => {
+                  await transactions.applyDecision(ctx.tx, envelope.payload);
+                }),
+              ],
+            }),
         },
         {
           provide: TRANSACTIONS_REPOSITORY,
@@ -117,7 +158,9 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown 
    * down, readiness reports it and the next maintenance run (every minute until the first
    * success, then every 6 h) creates the partitions.
    */
-  onApplicationBootstrap(): void {
+  async onApplicationBootstrap(): Promise<void> {
+    await this.producer.connect();
+    await this.statusConsumer.start();
     const run = async () => {
       const ok = await this.transactions.ensurePartitions().then(
         () => true,
@@ -131,6 +174,8 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown 
 
   async onApplicationShutdown(): Promise<void> {
     clearTimeout(this.partitionTimer);
+    await this.statusConsumer.stop();
+    await this.producer.disconnect();
     await this.pool.end();
   }
 }

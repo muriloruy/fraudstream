@@ -1,7 +1,14 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
-import { TransactionAuthorizationRequested, uuidv7 } from '@fraudstream/contracts';
+import {
+  createEnvelope,
+  FraudDecisionMade,
+  Topics,
+  TransactionAuthorizationRequested,
+  uuidv7,
+} from '@fraudstream/contracts';
+import { createProducer, eventHeaders } from '@fraudstream/kafka';
 import { createPool, migrate, type Pool } from '@fraudstream/db';
 import { startKafka, startPostgres, type TestKafka, type TestPostgres } from '@fraudstream/testing';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -310,5 +317,64 @@ describe('rate limiting (SPEC §7)', () => {
     for (let i = 0; i < 101; i++) statuses.push((await post(base, {})).status);
     expect(statuses.slice(0, 100).every((s) => s === 400)).toBe(true);
     expect(statuses[100]).toBe(429);
+  });
+});
+
+describe('decision status consumer (SPEC §3.3 step 8)', () => {
+  it('applies a fraud decision to the transaction once', async () => {
+    const base = await startApi();
+    const created = (await (await post(base, validRequest())).json()) as { transactionId: string };
+    const producer = createProducer(kafka.kafka);
+    await producer.connect();
+    const decision = (d: 'DECLINE' | 'APPROVE', finalScore: number) =>
+      createEnvelope({
+        eventType: FraudDecisionMade.eventType,
+        eventVersion: 1,
+        producer: 'decision-engine',
+        correlationId: created.transactionId,
+        payload: {
+          transactionId: created.transactionId,
+          accountId: 'acc_000123',
+          decision: d,
+          finalScore,
+          components: { ruleScore: 1, anomalyScore: 0.5 },
+          reasons: ['R006 card_testing'],
+          partial: false,
+          decidedAt: new Date().toISOString(),
+          latencyMs: 120,
+        },
+      });
+    const send = async (e: ReturnType<typeof decision>) =>
+      producer.send({
+        topic: Topics.decisions,
+        messages: [{ key: 'acc_000123', value: JSON.stringify(e), headers: eventHeaders(e) }],
+      });
+
+    const decline = decision('DECLINE', 0.8);
+    await send(decline);
+    const deadline = Date.now() + 60_000;
+    let body: { status: string; finalScore: string | null; decidedAt: string | null } | undefined;
+    while (Date.now() < deadline) {
+      const res = await fetch(`${base}/v1/transactions/${created.transactionId}`, {
+        headers: { 'x-api-key': apiKey },
+      });
+      body = (await res.json()) as typeof body;
+      if (body?.status !== 'PENDING') break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    expect(body).toMatchObject({ status: 'DECLINED', finalScore: '0.8000' });
+    expect(body?.decidedAt).not.toBeNull();
+
+    // A redelivery and a conflicting late decision change nothing.
+    await send(decline);
+    await send(decision('APPROVE', 0.1));
+    await new Promise((r) => setTimeout(r, 2000));
+    const again = (await (
+      await fetch(`${base}/v1/transactions/${created.transactionId}`, {
+        headers: { 'x-api-key': apiKey },
+      })
+    ).json()) as { status: string };
+    expect(again.status).toBe('DECLINED');
+    await producer.disconnect();
   });
 });

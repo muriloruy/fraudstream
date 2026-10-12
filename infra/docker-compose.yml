@@ -260,6 +260,89 @@ services:
       timeout: 5s
       retries: 12
 
+  # Fraud pipeline consumers (SPEC §6.4-§6.6). Each publishes its results through its own
+  # outbox with the relay embedded in the process (libs/service-kit).
+  fraud-rules:
+    <<: *app
+    image: fraudstream/fraud-rules:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: fraud-rules, MIGRATIONS: fraud_rules }
+    ports: ['3002:3002'] # /health and /metrics
+    environment:
+      <<: *app-env
+      PORT: '3002'
+    depends_on:
+      postgres: { condition: service_healthy }
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3002/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  anomaly-scorer:
+    <<: *app
+    image: fraudstream/anomaly-scorer:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: anomaly-scorer, MIGRATIONS: anomaly }
+    ports: ['3003:3003'] # /health and /metrics
+    environment:
+      <<: *app-env
+      PORT: '3003'
+    depends_on:
+      postgres: { condition: service_healthy }
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3003/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  decision-engine:
+    <<: *app
+    image: fraudstream/decision-engine:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: decision-engine, MIGRATIONS: decision }
+    ports: ['3004:3004'] # /health and /metrics
+    environment:
+      <<: *app-env
+      PORT: '3004'
+    depends_on:
+      postgres: { condition: service_healthy }
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3004/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
 volumes:
   kafka-1-data:
   kafka-2-data:

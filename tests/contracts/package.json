@@ -1,0 +1,20 @@
+{
+  "name": "@fraudstream/contract-tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Producer fixtures validated against consumer schemas, per topic (SPEC §13.3)",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@fraudstream/anomaly-scorer": "workspace:*",
+    "@fraudstream/contracts": "workspace:*",
+    "@fraudstream/decision-engine": "workspace:*",
+    "@fraudstream/fraud-rules": "workspace:*",
+    "@fraudstream/kafka": "workspace:*",
+    "@fraudstream/transaction-api": "workspace:*"
+  }
+}

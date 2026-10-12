@@ -13,7 +13,7 @@ Every service that changes its database must also publish an event about it. Doi
 **Transactional outbox with a polling relay**, shared by every producing service through `libs/outbox`:
 
 - The service writes its business rows and an `<schema>.outbox` row in **one** PostgreSQL transaction (`OutboxWriter`). The event exists if and only if the change does.
-- `outbox-relay` (one deployment per schema) reads `WHERE published_at IS NULL ORDER BY id LIMIT 500 FOR UPDATE SKIP LOCKED`, publishes with the idempotent producer (`acks=all`), waits for every ack, then sets `published_at` and commits. On failure it records `attempts`/`last_error` and backs off exponentially (100 ms → 2 s).
+- `outbox-relay` (one deployment per schema) reads `WHERE published_at IS NULL ORDER BY id LIMIT 500 FOR UPDATE SKIP LOCKED`, publishes with the idempotent producer (`acks=all`), waits for every ack, then sets `published_at` and commits. While idle it keeps polling every `RELAY_POLL_MS` (100 ms); on failure it records `attempts`/`last_error` and backs off exponentially (100 ms → 2 s). Backing off while idle was tried first and removed in M3: it added up to 2 s per relay hop to the first event after a quiet spell, and a decision crosses three relays (ADR-005).
 - **Ordering.** Rows are read in id order and sent with their key, so per-key order holds within one publisher. With several relay instances, `SKIP LOCKED` alone is not enough: two instances could publish consecutive batches of the same key concurrently and the later batch could land first. A session-level advisory lock (`pg_try_advisory_lock(hashtext('outbox-relay:<schema>'))`) therefore elects one active publisher per schema; the others stand by and take over within about a second when the leader's connection drops. The integration test runs two relays over 1,000 events and checks exactly one copy of each `event-id` and increasing sequence numbers per key.
 - **Delivery semantics.** At least once: a crash after the acks but before the commit republishes that batch. Consumers deduplicate by `event-id` (SPEC §4.4).
 - **Bounded delivery.** The relay sets `message.timeout.ms` (15 s) so a broker outage becomes a failed batch that is retried, instead of a send that hangs.
@@ -28,5 +28,5 @@ Every service that changes its database must also publish an event about it. Doi
 ## Consequences
 
 - One extra table and one small process per producing schema; outbox rows should be purged after publication (a cleanup job is added with the consumer library in M2).
-- Publication latency is bounded by the poll interval (100 ms when busy) plus the producer linger (5 ms) — acceptable against the 500 ms p95 decision target (SPEC §11), to be measured in M8.
+- Publication latency is bounded by the poll interval (100 ms, busy or idle) plus the producer linger (5 ms) — acceptable against the 500 ms p95 decision target (SPEC §11), to be measured in M8.
 - Throughput of one schema's outbox is bounded by a single active publisher; batching (500 rows, measured at tens of thousands of messages per second in ADR-003) keeps that far above the 200 tx/s target.

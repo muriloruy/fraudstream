@@ -79,6 +79,11 @@ export interface ConsumerRuntimeOptions {
   /** Schema that holds this service's `processed_events` table. */
   schema: string;
   handlers: readonly EventHandler[];
+  /**
+   * Called for a message with a null value (a tombstone on a compacted topic), inside a DB
+   * transaction. Without it, tombstones are invalid messages (DLQ).
+   */
+  onTombstone?: (key: string, tx: PoolClient, topic: string) => Promise<void>;
   /** Defaults to range: partition N of co-partitioned topics lands on one instance (ADR-002). */
   assignor?: Assignor;
   fromBeginning?: boolean;
@@ -262,6 +267,13 @@ export class ConsumerRuntime {
     message: KafkaMessage,
     headers: MessageHeaders,
   ): Promise<Outcome> {
+    const onTombstone = this.options.onTombstone;
+    if (message.value === null && message.key !== null && onTombstone) {
+      const key = message.key.toString();
+      // Deleting state by key is idempotent, so tombstones need no inbox entry.
+      await withTransaction(this.options.pool, (tx) => onTombstone(key, tx, topic));
+      return 'ok';
+    }
     const { definition, envelope } = decodeEvent(message.value, [...this.handlers.keys()]);
     const handler = this.handlers.get(definition);
     if (!handler)

@@ -59,7 +59,8 @@ export const TOPIC_CATALOGUE: readonly SourceTopicSpec[] = [
     partitions: FRAUD_FLOW_PARTITIONS,
     cleanupPolicy: 'compact',
     retentionMs: null,
-    consumerGroups: [ConsumerGroups.fraudRules],
+    // anomaly-scorer reads profiles for its cold-start defaults by risk tier (SPEC §6.5).
+    consumerGroups: [ConsumerGroups.fraudRules, ConsumerGroups.anomalyScorer],
   },
   {
     name: Topics.ruleResults,

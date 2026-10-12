@@ -2,7 +2,7 @@
   "name": "@fraudstream/transaction-api",
   "version": "0.0.0",
   "private": true,
-  "description": "Public authorization API: validation, idempotency, vault tokenization, outbox (SPEC \u00a76.1)",
+  "description": "Public authorization API: validation, idempotency, vault tokenization, outbox (SPEC §6.1)",
   "type": "module",
   "exports": {
     "./app": {
@@ -14,6 +14,11 @@
       "@fraudstream/source": "./src/config/config.ts",
       "types": "./dist/config/config.d.ts",
       "default": "./dist/config/config.js"
+    },
+    "./contract": {
+      "@fraudstream/source": "./src/contract.ts",
+      "types": "./dist/contract.d.ts",
+      "default": "./dist/contract.js"
     }
   },
   "files": [

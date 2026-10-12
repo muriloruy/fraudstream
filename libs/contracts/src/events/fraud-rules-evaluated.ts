@@ -19,6 +19,8 @@ export const FraudRulesEvaluatedV1 = z.object({
   firedRules: z.array(FiredRule),
   rulesetVersion: z.string().min(1),
   evaluatedAt: UtcDateTime,
+  /** Copied from the transaction so decision latency can be measured downstream (added in v1, optional). */
+  requestedAt: UtcDateTime.optional(),
 });
 export type FraudRulesEvaluatedV1 = z.infer<typeof FraudRulesEvaluatedV1>;
 

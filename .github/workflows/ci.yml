@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    # `labeled` lets adding the `e2e` label start the end-to-end job on a PR.
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches: [main]
 
@@ -73,6 +75,21 @@ jobs:
           path: '**/coverage/'
           if-no-files-found: ignore
 
+  contracts:
+    name: contract tests
+    # Always runs, not only when affected: a schema change must fail CI for every consumer (SPEC §13.3).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Producer fixtures against consumer schemas, per topic
+        run: pnpm test:contracts
+
   integration:
     name: integration + security
     runs-on: ubuntu-latest
@@ -93,3 +110,30 @@ jobs:
         run: pnpm exec nx run-many -t test:integration --parallel=2
       - name: Security tests (PAN leak, SQL injection)
         run: pnpm test:security
+
+  e2e:
+    name: end-to-end (compose stack)
+    # The full stack is slow to build: run on main, and on PRs labeled `e2e` (SPEC §13.4).
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'e2e')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate .env with throwaway secrets
+        run: pnpm env:init
+      - name: Build and start the core stack
+        run: docker compose --profile core up -d --build --wait --wait-timeout 300
+      - name: End-to-end tests (card testing burst, ordinary purchase)
+        run: pnpm test:e2e
+      - name: Service logs
+        if: failure()
+        run: docker compose --profile core logs --no-color --tail 300
+      - name: Tear down
+        if: always()
+        run: docker compose --profile core down -v

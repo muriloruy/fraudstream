@@ -26,7 +26,9 @@
     "apikey:create": "pnpm --filter @fraudstream/transaction-api apikey:create",
     "test:security": "pnpm --filter @fraudstream/security-tests test:security",
     "migrations:add-inbox": "tsx --tsconfig tsconfig.runtime.json scripts/add-inbox-migration.ts",
-    "dlq:replay": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/dlq-replay.ts"
+    "dlq:replay": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/dlq-replay.ts",
+    "test:e2e": "pnpm --filter @fraudstream/e2e-tests test:e2e",
+    "test:contracts": "pnpm --filter @fraudstream/contract-tests test"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

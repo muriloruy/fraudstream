@@ -1,4 +1,7 @@
-import type { TransactionAuthorizationRequestedV1 } from '@fraudstream/contracts';
+import type {
+  FraudDecisionMadeV1,
+  TransactionAuthorizationRequestedV1,
+} from '@fraudstream/contracts';
 import type { Pool } from '@fraudstream/db';
 import type { Queryable } from '@fraudstream/outbox';
 
@@ -76,6 +79,20 @@ export class TransactionsRepository {
       requestedAt: r.requested_at.toISOString(),
       decidedAt: r.decided_at?.toISOString() ?? null,
     };
+  }
+
+  /**
+   * Reflects the fraud decision on the transaction (SPEC §3.3 step 8). Only PENDING rows
+   * change, so redelivered or replayed decisions are no-ops.
+   */
+  async applyDecision(client: Queryable, d: FraudDecisionMadeV1): Promise<boolean> {
+    const status = { APPROVE: 'APPROVED', REVIEW: 'REVIEW', DECLINE: 'DECLINED' }[d.decision];
+    const result = (await client.query(
+      `UPDATE transactions SET status = $2, final_score = $3, decided_at = $4
+        WHERE transaction_id = $1 AND status = 'PENDING'`,
+      [d.transactionId, status, d.finalScore, d.decidedAt],
+    )) as { rowCount: number | null };
+    return result.rowCount === 1;
   }
 
   /** Keeps monthly partitions ahead of time (current + next 2 months). */

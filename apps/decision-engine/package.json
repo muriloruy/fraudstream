@@ -1,0 +1,38 @@
+{
+  "name": "@fraudstream/decision-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Joins rule results and anomaly scores into APPROVE / REVIEW / DECLINE decisions (SPEC §6.6)",
+  "type": "module",
+  "exports": {
+    "./contract": {
+      "@fraudstream/source": "./src/contract.ts",
+      "types": "./dist/contract.d.ts",
+      "default": "./dist/contract.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "dev": "nx run @fraudstream/decision-engine:build && node --env-file-if-exists=../../.env dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "@fraudstream/contracts": "workspace:*",
+    "@fraudstream/db": "workspace:*",
+    "@fraudstream/kafka": "workspace:*",
+    "@fraudstream/observability": "workspace:*",
+    "@fraudstream/outbox": "workspace:*",
+    "@fraudstream/service-kit": "workspace:*",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@fraudstream/testing": "workspace:*"
+  }
+}
