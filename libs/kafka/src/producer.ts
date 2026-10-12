@@ -10,8 +10,13 @@ export interface OutgoingMessage {
  * Durable producer settings (SPEC §4.2): acks=all, idempotence (which also keeps per-partition
  * order with up to 5 in-flight requests), lz4 compression and a 5 ms linger for batching.
  */
-export function createProducer(kafka: Kafka): Producer {
+export function createProducer(
+  kafka: Kafka,
+  /** Extra librdkafka settings, e.g. `{ 'message.timeout.ms': 15000 }` to bound delivery time. */
+  overrides: Record<string, string | number> = {},
+): Producer {
   return kafka.producer({
+    ...overrides,
     kafkaJS: {
       idempotent: true,
       acks: -1,

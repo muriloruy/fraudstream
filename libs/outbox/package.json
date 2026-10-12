@@ -18,12 +18,17 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.int.config.ts"
   },
   "dependencies": {
     "@fraudstream/contracts": "workspace:*",
     "@fraudstream/db": "workspace:*",
     "@fraudstream/kafka": "workspace:*",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "@fraudstream/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "@fraudstream/testing": "workspace:*"
   }
 }

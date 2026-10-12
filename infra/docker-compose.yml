@@ -220,6 +220,37 @@ services:
       retries: 12
       start_period: 15s
 
+  # Publishes payments.outbox to Kafka (SPEC §4.5). Safe to scale: one instance publishes
+  # at a time (advisory-lock leader), the others stand by.
+  outbox-relay-payments:
+    <<: *app
+    image: fraudstream/outbox-relay:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: outbox-relay }
+    ports: ['9464:9464'] # Prometheus metrics
+    environment:
+      <<: *app-env
+      MIGRATE_ON_START: 'false'
+      RELAY_SCHEMA: payments
+      RELAY_BATCH_SIZE: '500'
+      RELAY_POLL_MS: '100'
+    depends_on:
+      transaction-api: { condition: service_healthy } # owns and migrates payments.outbox
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:9464/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
 volumes:
   kafka-1-data:
   kafka-2-data:

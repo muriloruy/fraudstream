@@ -34,12 +34,12 @@
 
 ## 4. outbox-relay (SPEC §4.5, §6.3)
 
-- [ ] 4.1 Implement `libs/outbox` writer (insert envelope row with headers) and relay core (`FOR UPDATE SKIP LOCKED` batch, publish, mark published, attempts/last_error, backoff, leader/advisory lock per schema); unit tests for batch state transitions
-- [ ] 4.2 Create `apps/outbox-relay` (configured by `RELAY_SCHEMA`, `RELAY_BATCH_SIZE`, `RELAY_POLL_MS`), graceful shutdown on SIGTERM, Prometheus metrics `outbox_lag_rows`, `outbox_oldest_unpublished_seconds`, `outbox_publish_duration_ms`; verify `/metrics` exposes them
-- [ ] 4.3 Integration test: 2 relay instances, 1,000 events across many keys → exactly-once publish (unique `event-id` count = 1,000) and per-key order (SPEC §13.2); verify it passes in CI
-- [ ] 4.4 Integration test: broker stopped during relay → rows stay unpublished with `attempts` > 0, then published after restart
-- [ ] 4.5 Add relay to compose; verify an accepted transaction appears on `payments.transactions.v1` in kafka-ui keyed by `accountId`
-- [ ] 4.6 Write ADR-004 (polling outbox vs Kafka transactions vs CDC)
+- [x] 4.1 Implement `libs/outbox` writer (insert envelope row with headers) and relay core (`FOR UPDATE SKIP LOCKED` batch, publish, mark published, attempts/last_error, backoff, leader/advisory lock per schema); unit tests for batch state transitions
+- [x] 4.2 Create `apps/outbox-relay` (configured by `RELAY_SCHEMA`, `RELAY_BATCH_SIZE`, `RELAY_POLL_MS`), graceful shutdown on SIGTERM, Prometheus metrics `outbox_lag_rows`, `outbox_oldest_unpublished_seconds`, `outbox_publish_duration_ms`; verify `/metrics` exposes them
+- [x] 4.3 Integration test: 2 relay instances, 1,000 events across many keys → exactly-once publish (unique `event-id` count = 1,000) and per-key order (SPEC §13.2); verify it passes in CI
+- [x] 4.4 Integration test: broker stopped during relay → rows stay unpublished with `attempts` > 0, then published after restart
+- [x] 4.5 Add relay to compose; verify an accepted transaction appears on `payments.transactions.v1` in kafka-ui keyed by `accountId`
+- [x] 4.6 Write ADR-004 (polling outbox vs Kafka transactions vs CDC)
 
 ## 5. Security tests (SPEC §7, §13.5)
 
