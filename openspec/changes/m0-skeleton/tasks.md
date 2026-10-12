@@ -46,7 +46,7 @@
 
 ## 6. Verification
 
-- [ ] 6.1 From a clean clone: `pnpm i`, `cp .env.example .env`, `docker compose --profile core up -d`, `scripts/verify-topics.sh` all succeed
+- [x] 6.1 From a clean clone: `pnpm i`, `cp .env.example .env`, `docker compose --profile core up -d`, `scripts/verify-topics.sh` all succeed
 - [ ] 6.2 Run `pnpm lint && pnpm typecheck && pnpm test` and confirm all pass; confirm CI is green on the PR
 - [ ] 6.3 Check every M0 acceptance item in SPEC §17 is satisfied and tick it in the PR description
 
