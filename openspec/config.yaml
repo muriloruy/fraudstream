@@ -1,0 +1,32 @@
+schema: spec-driven
+
+# Project context: constraints that guide every OpenSpec artifact and workflow.
+context: |
+  FraudStream is a portfolio project: a real-time payment fraud detection platform
+  (Kafka + NestJS/TypeScript + PostgreSQL + React/Tailwind). The single source of truth
+  is docs/SPEC.md; refer to requirements by its section numbers (e.g. "SPEC §4.4").
+  Work is delivered milestone by milestone (SPEC §17, M0..M8); each milestone is one
+  OpenSpec change named mN-<slug>. Do not start a milestone before the previous one is
+  archived, unless the user says otherwise.
+  Hard constraints: TypeScript strict with no `any`; domain code (rules, scoring, fusion,
+  money) must not import NestJS or Kafka; SQL is parameterized only with per-service
+  migrations under migrations/<service>/; Kafka offsets are committed only after the DB
+  transaction commits; a PAN or CVV is never logged, put on Kafka, or stored outside
+  card-vault; money is a decimal string / numeric(18,2), never a float.
+  Everything must run locally with docker compose plus one seed command; no cloud account.
+
+rules:
+  proposal:
+    - Link the SPEC sections and the milestone (SPEC §17) the change implements
+    - State explicitly which items of the milestone are out of scope, if any
+  tasks:
+    - Every acceptance criterion of the milestone in SPEC §17 must map to at least one task
+    - Reference the SPEC section each task implements, e.g. "(SPEC §4.5)"
+    - Each task group lands its own unit/integration tests; never defer tests to a final group
+    - End with a verification group running `pnpm lint && pnpm typecheck && pnpm test`
+
+operations:
+  apply:
+    guidance:
+      - Follow CLAUDE.md and use Conventional Commits
+      - Check off tasks in tasks.md as soon as they are verified
