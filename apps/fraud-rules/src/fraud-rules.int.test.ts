@@ -157,9 +157,9 @@ describe('rule context (SPEC §6.4)', () => {
 
     let queries = 0;
     const counting = {
-      query: (...args: Parameters<Pool['query']>) => {
+      query: (text: string, values: unknown[]) => {
         queries++;
-        pool.query(...args);
+        return pool.query(text, values);
       },
     } as unknown as Pool;
     const repo = new RulesRepository(loadRuleset());
