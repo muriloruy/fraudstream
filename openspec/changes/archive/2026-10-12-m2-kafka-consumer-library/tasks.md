@@ -31,8 +31,8 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Run all SPEC §13.2 integration tests (idempotency, retry, DLQ, rebalance) in the CI `integration` job; confirm green
-- [ ] 5.2 Run `pnpm lint && pnpm typecheck && pnpm test`; tick every M2 acceptance item in SPEC §17
+- [x] 5.1 Run all SPEC §13.2 integration tests (idempotency, retry, DLQ, rebalance) in the CI `integration` job; confirm green
+- [x] 5.2 Run `pnpm lint && pnpm typecheck && pnpm test`; tick every M2 acceptance item in SPEC §17
 
 ## Workflow follow-up
 
