@@ -19,11 +19,12 @@
     "topics:generate": "pnpm --filter @fraudstream/contracts topics:generate",
     "topics:verify": "bash scripts/verify-topics.sh",
     "prepare": "husky",
-    "db:migrate": "tsx --conditions=@fraudstream/source scripts/db-migrate.ts",
+    "db:migrate": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/db-migrate.ts",
     "test:integration": "nx run-many -t test:integration",
-    "env:init": "tsx scripts/env-init.ts",
+    "env:init": "tsx --tsconfig tsconfig.runtime.json scripts/env-init.ts",
     "vault:rotate": "pnpm --filter @fraudstream/card-vault rotate",
-    "apikey:create": "pnpm --filter @fraudstream/transaction-api apikey:create"
+    "apikey:create": "pnpm --filter @fraudstream/transaction-api apikey:create",
+    "test:security": "pnpm --filter @fraudstream/security-tests test:security"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

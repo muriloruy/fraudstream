@@ -43,13 +43,13 @@
 
 ## 5. Security tests (SPEC §7, §13.5)
 
-- [ ] 5.1 Implement `tests/security/pan-leak.spec.ts` and root script `pnpm test:security` (logs, all topics, `pg_dump` excluding `vault`, API responses); verify it fails if redaction is disabled and passes otherwise
-- [ ] 5.2 Add SQL-injection payload cases on all string inputs of `POST /v1/transactions` → 400 and DB untouched
+- [x] 5.1 Implement `tests/security/pan-leak.spec.ts` and root script `pnpm test:security` (logs, all topics, `pg_dump` excluding `vault`, API responses); verify it fails if redaction is disabled and passes otherwise
+- [x] 5.2 Add SQL-injection payload cases on all string inputs of `POST /v1/transactions` → 400 and DB untouched
 - [ ] 5.3 Add CI job `integration` (Testcontainers) running integration + security suites; verify it runs on the PR
 
 ## 6. Verification
 
-- [ ] 6.1 End-to-end smoke with compose: POST a transaction → 202, row in `payments.transactions`, event on `payments.transactions.v1` with masked PAN and token only
+- [x] 6.1 End-to-end smoke with compose: POST a transaction → 202, row in `payments.transactions`, event on `payments.transactions.v1` with masked PAN and token only
 - [ ] 6.2 Run `pnpm lint && pnpm typecheck && pnpm test && pnpm test:security`; confirm CI green
 - [ ] 6.3 Tick every M1 acceptance item in SPEC §17
 

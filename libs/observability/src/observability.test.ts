@@ -34,6 +34,21 @@ describe('createLogger', () => {
     const parsed = JSON.parse(line) as Record<string, unknown>;
     expect(parsed).toMatchObject({ service: 'test', level: 'debug', password: '[Redacted]' });
   });
+
+  it('never mutates the logged object (overlapping card/pan paths)', () => {
+    const { lines, destination } = capture();
+    const logger = createLogger({ service: 'test', level: 'trace', destination });
+    const body = { card: { pan: '4111111111111111', cvv: '123', expiryMonth: 12 } };
+    const flat = { pan: '4111111111111111', cvv: '123' };
+    const headers = { req: { headers: { authorization: 'Bearer x', cookie: 'c=1' } } };
+    logger.trace({ body }, 'nested');
+    logger.trace(flat, 'flat');
+    logger.trace(headers, 'headers');
+    expect(body).toEqual({ card: { pan: '4111111111111111', cvv: '123', expiryMonth: 12 } });
+    expect(flat).toEqual({ pan: '4111111111111111', cvv: '123' });
+    expect(headers.req.headers.authorization).toBe('Bearer x');
+    expect(lines.join('')).not.toContain('4111111111111111');
+  });
 });
 
 describe('createMetricsRegistry', () => {

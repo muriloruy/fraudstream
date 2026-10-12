@@ -108,8 +108,10 @@ export const Uuid = z.uuid();
 /** ISO 8601 timestamp in UTC (`Z` suffix). */
 export const UtcDateTime = z.iso.datetime({ offset: false });
 
-export const AccountId = z.string().min(1).max(64);
-export const MerchantId = z.string().min(1).max(64);
+/** Identifiers have a known shape, so they are allow-listed: letters, digits, `_` and `-`. */
+const IDENTIFIER = /^[A-Za-z0-9_-]{1,64}$/;
+export const AccountId = z.string().regex(IDENTIFIER, 'must be 1-64 letters, digits, _ or -');
+export const MerchantId = z.string().regex(IDENTIFIER, 'must be 1-64 letters, digits, _ or -');
 
 /** A score normalized to [0, 1]. */
 export const UnitScore = z.number().min(0).max(1);

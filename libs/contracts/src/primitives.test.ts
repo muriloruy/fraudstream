@@ -11,6 +11,7 @@ import {
   toCents,
   UtcDateTime,
   UuidV7,
+  AccountId,
 } from './primitives.js';
 
 describe('DecimalString / Money (ADR-009)', () => {
@@ -89,5 +90,14 @@ describe('ids and timestamps', () => {
     expect(UtcDateTime.safeParse('2026-10-12T18:00:00.000Z').success).toBe(true);
     expect(UtcDateTime.safeParse('2026-10-12T15:00:00.000-03:00').success).toBe(false);
     expect(UtcDateTime.safeParse('2026-10-12').success).toBe(false);
+  });
+});
+
+describe('identifiers', () => {
+  it('allow-lists letters, digits, underscore and dash', () => {
+    expect(AccountId.safeParse('acc_000123').success).toBe(true);
+    expect(AccountId.safeParse("acc'; DROP TABLE x;--").success).toBe(false);
+    expect(AccountId.safeParse('').success).toBe(false);
+    expect(AccountId.safeParse('a'.repeat(65)).success).toBe(false);
   });
 });

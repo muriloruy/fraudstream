@@ -298,6 +298,18 @@ importers:
         specifier: 12.2.0
         version: 12.2.0
 
+  tests/security:
+    devDependencies:
+      '@fraudstream/contracts':
+        specifier: workspace:*
+        version: link:../../libs/contracts
+      '@fraudstream/db':
+        specifier: workspace:*
+        version: link:../../libs/db
+      '@fraudstream/testing':
+        specifier: workspace:*
+        version: link:../../libs/testing
+
 packages:
 
   '@babel/code-frame@7.29.7':

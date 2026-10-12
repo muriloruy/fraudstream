@@ -1,0 +1,6 @@
+{
+  "//": "Used only by tsx for plain scripts (db:migrate, vault:rotate, apikey:create). Nest apps run from their build: tsx loads a second copy of ESM packages that CommonJS code require()s, which breaks Nest DI.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true },
+  "include": ["apps/*/src/**/*.ts", "libs/*/src/**/*.ts", "scripts/**/*.ts"]
+}

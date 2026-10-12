@@ -4,18 +4,30 @@
   "private": true,
   "description": "Public authorization API: validation, idempotency, vault tokenization, outbox (SPEC \u00a76.1)",
   "type": "module",
+  "exports": {
+    "./app": {
+      "@fraudstream/source": "./src/app.ts",
+      "types": "./dist/app.d.ts",
+      "default": "./dist/app.js"
+    },
+    "./config": {
+      "@fraudstream/source": "./src/config/config.ts",
+      "types": "./dist/config/config.d.ts",
+      "default": "./dist/config/config.js"
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "dev": "tsx --conditions=@fraudstream/source src/main.ts",
+    "dev": "nx run @fraudstream/transaction-api:build && node --env-file-if-exists=../../.env dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.int.config.ts",
-    "apikey:create": "tsx --conditions=@fraudstream/source src/create-api-key.ts"
+    "apikey:create": "tsx --tsconfig ../../tsconfig.runtime.json --conditions=@fraudstream/source src/create-api-key.ts"
   },
   "dependencies": {
     "@fraudstream/contracts": "workspace:*",
