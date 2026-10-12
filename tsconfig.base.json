@@ -20,8 +20,6 @@
     "skipLibCheck": true,
     "declaration": true,
     "sourceMap": true,
-    "paths": {
-      "@fraudstream/contracts": ["./libs/contracts/src/index.ts"]
-    }
+    "customConditions": ["@fraudstream/source"]
   }
 }

@@ -2,11 +2,11 @@
 
 ## 1. Shared infrastructure libs (SPEC §12)
 
-- [ ] 1.1 Create `libs/db`: per-service pg pool from `DATABASE_URL_<SVC>`, `withTransaction()` helper, migration runner wrapper and root script `pnpm db:migrate`; integration test (Testcontainers) proves rollback on thrown error
-- [ ] 1.2 Create `libs/security`: pino redaction paths (SPEC §7), `maskPan()`, `luhnValid()`, `hashWithPepper()` (`sha256:` prefix); unit tests for masking, Luhn table cases and hashing determinism
-- [ ] 1.3 Create `libs/observability` minimal logger factory (pino JSON with `service`, `correlationId`) using the redaction config; unit test shows a card object logged as `[Redacted]`
-- [ ] 1.4 Create `libs/testing` with Testcontainers fixtures for PostgreSQL (with `init-roles.sql`) and Kafka (topics from `topics.conf`); verify a smoke test starts both
-- [ ] 1.5 Write ADR-003 (Kafka client choice with maintenance status and a small throughput benchmark) and implement the `libs/kafka` producer wrapper (`acks=all`, idempotence, lz4/zstd, `linger.ms=5`, standard headers from contracts) (SPEC §4.2); integration test publishes and reads back all 7 headers
+- [x] 1.1 Create `libs/db`: per-service pg pool from `DATABASE_URL_<SVC>`, `withTransaction()` helper, migration runner wrapper and root script `pnpm db:migrate`; integration test (Testcontainers) proves rollback on thrown error
+- [x] 1.2 Create `libs/security`: pino redaction paths (SPEC §7), `maskPan()`, `luhnValid()`, `hashWithPepper()` (`sha256:` prefix); unit tests for masking, Luhn table cases and hashing determinism
+- [x] 1.3 Create `libs/observability` minimal logger factory (pino JSON with `service`, `correlationId`) using the redaction config; unit test shows a card object logged as `[Redacted]`
+- [x] 1.4 Create `libs/testing` with Testcontainers fixtures for PostgreSQL (with `init-roles.sql`) and Kafka (topics from `topics.conf`); verify a smoke test starts both
+- [x] 1.5 Write ADR-003 (Kafka client choice with maintenance status and a small throughput benchmark) and implement the `libs/kafka` producer wrapper (`acks=all`, idempotence, lz4/zstd, `linger.ms=5`, standard headers from contracts) (SPEC §4.2); integration test publishes and reads back all 7 headers
 
 ## 2. card-vault (SPEC §5.2, §6.2)
 

@@ -1,0 +1,28 @@
+{
+  "name": "@fraudstream/observability",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Logger factory with PAN/secret redaction and Prometheus metrics registry (SPEC \u00a710)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fraudstream/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@fraudstream/security": "workspace:*",
+    "pino": "10.4.0",
+    "prom-client": "15.1.3"
+  }
+}

@@ -2,12 +2,13 @@
   "name": "@fraudstream/contracts",
   "version": "0.0.0",
   "private": true,
-  "description": "Event envelope, v1 event payloads, topic catalogue and header names (SPEC §4)",
+  "description": "Event envelope, v1 event payloads, topic catalogue and header names (SPEC \u00a74)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "@fraudstream/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
@@ -21,7 +22,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "topics:generate": "tsx scripts/generate-topics-conf.ts"
+    "topics:generate": "tsx --conditions=@fraudstream/source scripts/generate-topics-conf.ts"
   },
   "dependencies": {
     "zod": "4.6.7"

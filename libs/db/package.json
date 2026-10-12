@@ -1,0 +1,31 @@
+{
+  "name": "@fraudstream/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PostgreSQL pool, transaction helper and migration runner (SPEC \u00a75)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "@fraudstream/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "pg": "8.23.1",
+    "node-pg-migrate": "9.0.0"
+  },
+  "devDependencies": {
+    "@fraudstream/testing": "workspace:*"
+  }
+}
