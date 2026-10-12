@@ -452,6 +452,27 @@ importers:
         specifier: 12.2.0
         version: 12.2.0
 
+  tests/contracts:
+    devDependencies:
+      '@fraudstream/anomaly-scorer':
+        specifier: workspace:*
+        version: link:../../apps/anomaly-scorer
+      '@fraudstream/contracts':
+        specifier: workspace:*
+        version: link:../../libs/contracts
+      '@fraudstream/decision-engine':
+        specifier: workspace:*
+        version: link:../../apps/decision-engine
+      '@fraudstream/fraud-rules':
+        specifier: workspace:*
+        version: link:../../apps/fraud-rules
+      '@fraudstream/kafka':
+        specifier: workspace:*
+        version: link:../../libs/kafka
+      '@fraudstream/transaction-api':
+        specifier: workspace:*
+        version: link:../../apps/transaction-api
+
   tests/e2e:
     devDependencies:
       '@fraudstream/contracts':

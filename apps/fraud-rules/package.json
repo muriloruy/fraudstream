@@ -2,8 +2,15 @@
   "name": "@fraudstream/fraud-rules",
   "version": "0.0.0",
   "private": true,
-  "description": "Deterministic fraud rules R001-R010 with per-account context (SPEC \u00a76.4)",
+  "description": "Deterministic fraud rules R001-R010 with per-account context (SPEC §6.4)",
   "type": "module",
+  "exports": {
+    "./contract": {
+      "@fraudstream/source": "./src/contract.ts",
+      "types": "./dist/contract.d.ts",
+      "default": "./dist/contract.js"
+    }
+  },
   "files": [
     "dist",
     "rules.yaml"

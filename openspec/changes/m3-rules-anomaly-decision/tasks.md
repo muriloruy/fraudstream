@@ -36,7 +36,7 @@
 ## 5. End-to-end and docs
 
 - [x] 5.1 E2E test (compose up + small test producer): `card_testing` burst for one account → `DECLINED` via API within 3 s (SPEC §13.4); add to CI `e2e` job (main and PRs labeled `e2e`)
-- [ ] 5.2 Contract tests: producer fixtures of `FraudRulesEvaluated`, `AnomalyScored`, `FraudDecisionMade` validated against consumer schemas; add CI `contracts` job (SPEC §13.3)
+- [x] 5.2 Contract tests: producer fixtures of `FraudRulesEvaluated`, `AnomalyScored`, `FraudDecisionMade` validated against consumer schemas; add CI `contracts` job (SPEC §13.3)
 - [ ] 5.3 Write ADR-005 (asynchronous 202 vs synchronous authorization, request/reply alternative)
 
 ## 6. Verification
