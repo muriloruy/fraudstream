@@ -20,7 +20,7 @@ export interface RelayOptions {
   batchSize?: number;
   /** Poll interval while there is work (`RELAY_POLL_MS`, default 100). */
   pollMs?: number;
-  /** Upper bound of the exponential backoff when idle or failing (default 2000). */
+  /** Upper bound of the exponential backoff after failed cycles (default 2000). */
   maxBackoffMs?: number;
   /** How often a standby instance retries to become leader (default 1000). */
   standbyRetryMs?: number;
@@ -45,6 +45,21 @@ export function groupByTopic(rows: readonly OutboxRow[]): Map<string, OutgoingMe
 /** Exponential backoff: pollMs, 2x, 4x, ... capped at maxMs. */
 export function backoffMs(attempt: number, pollMs: number, maxMs: number): number {
   return Math.min(maxMs, pollMs * 2 ** Math.max(0, attempt));
+}
+
+/**
+ * Delay before the next cycle. An idle relay keeps polling at `pollMs` (SPEC §6.3): backing
+ * off while idle would add up to `maxMs` to every hop of the first event after a quiet spell,
+ * and a decision crosses three relays. Only consecutive failures back off exponentially.
+ */
+export function nextDelayMs(
+  published: number,
+  failures: number,
+  options: { batchSize: number; pollMs: number; maxBackoffMs: number },
+): number {
+  if (failures > 0) return backoffMs(failures - 1, options.pollMs, options.maxBackoffMs);
+  // A full batch means there is probably more: go again immediately.
+  return published >= options.batchSize ? 0 : options.pollMs;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -145,25 +160,26 @@ export class OutboxRelay {
   }
 
   private async run(): Promise<void> {
-    let idleOrFailed = 0;
+    let failures = 0;
     while (this.running) {
+      let published = 0;
       try {
         if (!(await this.ensureLeadership())) {
           await sleep(this.standbyRetryMs);
           continue;
         }
-        const published = await this.publishBatch();
-        if (published > 0) {
-          idleOrFailed = 0;
-          // A full batch means there is probably more: go again immediately.
-          if (published < this.batchSize) await sleep(this.pollMs);
-        } else {
-          await sleep(backoffMs(idleOrFailed++, this.pollMs, this.maxBackoffMs));
-        }
+        published = await this.publishBatch();
+        failures = 0;
       } catch (error) {
+        failures++;
         this.options.logger?.warn({ err: describe(error) }, 'outbox publish failed; backing off');
-        await sleep(backoffMs(idleOrFailed++, this.pollMs, this.maxBackoffMs));
       }
+      const delay = nextDelayMs(published, failures, {
+        batchSize: this.batchSize,
+        pollMs: this.pollMs,
+        maxBackoffMs: this.maxBackoffMs,
+      });
+      if (delay > 0) await sleep(delay);
     }
   }
 

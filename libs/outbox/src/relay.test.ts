@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { backoffMs, groupByTopic, type OutboxRow } from './relay.js';
+import { backoffMs, groupByTopic, nextDelayMs, type OutboxRow } from './relay.js';
 
 const row = (id: string, topic: string, key: string): OutboxRow => ({
   id,
@@ -30,6 +30,25 @@ describe('groupByTopic', () => {
 describe('backoffMs', () => {
   it('doubles from the poll interval up to the cap', () => {
     expect([0, 1, 2, 3, 4, 5].map((a) => backoffMs(a, 100, 2000))).toEqual([
+      100, 200, 400, 800, 1600, 2000,
+    ]);
+  });
+});
+
+describe('nextDelayMs', () => {
+  const options = { batchSize: 500, pollMs: 100, maxBackoffMs: 2000 };
+
+  it('keeps polling at pollMs while idle, however long the quiet spell', () => {
+    expect(nextDelayMs(0, 0, options)).toBe(100);
+  });
+
+  it('goes again immediately after a full batch', () => {
+    expect(nextDelayMs(500, 0, options)).toBe(0);
+    expect(nextDelayMs(499, 0, options)).toBe(100);
+  });
+
+  it('backs off exponentially only on consecutive failures', () => {
+    expect([1, 2, 3, 4, 5, 6].map((f) => nextDelayMs(0, f, options))).toEqual([
       100, 200, 400, 800, 1600, 2000,
     ]);
   });
