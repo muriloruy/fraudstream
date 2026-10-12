@@ -24,7 +24,8 @@
     "env:init": "tsx --tsconfig tsconfig.runtime.json scripts/env-init.ts",
     "vault:rotate": "pnpm --filter @fraudstream/card-vault rotate",
     "apikey:create": "pnpm --filter @fraudstream/transaction-api apikey:create",
-    "test:security": "pnpm --filter @fraudstream/security-tests test:security"
+    "test:security": "pnpm --filter @fraudstream/security-tests test:security",
+    "migrations:add-inbox": "tsx --tsconfig tsconfig.runtime.json scripts/add-inbox-migration.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

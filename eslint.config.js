@@ -57,6 +57,11 @@ export default tseslint.config(
     },
   },
   {
+    // CLI scripts read and write fixed paths inside the repository.
+    files: ['scripts/**/*.ts'],
+    rules: { 'security/detect-non-literal-fs-filename': 'off' },
+  },
+  {
     files: ['**/*.js'],
     ...tseslint.configs.disableTypeChecked,
   },
