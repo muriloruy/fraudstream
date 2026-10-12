@@ -15,6 +15,7 @@
     "@fraudstream/decision-engine": "workspace:*",
     "@fraudstream/fraud-rules": "workspace:*",
     "@fraudstream/kafka": "workspace:*",
+    "@fraudstream/ledger": "workspace:*",
     "@fraudstream/transaction-api": "workspace:*"
   }
 }

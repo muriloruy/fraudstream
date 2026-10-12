@@ -32,6 +32,13 @@ export function toCents(value: string): bigint {
   return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
 }
 
+/** Exact inverse of `toCents`, also for negative amounts (balance deltas): -12345n → "-123.45". */
+export function fromCents(cents: bigint): string {
+  const sign = cents < 0n ? '-' : '';
+  const abs = cents < 0n ? -cents : cents;
+  return `${sign}${(abs / 100n).toString()}.${(abs % 100n).toString().padStart(2, '0')}`;
+}
+
 /** ISO 4217 currencies accepted by the platform (SPEC §6.1 allow-list). */
 export const CURRENCIES = [
   'BRL',

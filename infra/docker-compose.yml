@@ -343,6 +343,33 @@ services:
       retries: 12
       start_period: 15s
 
+  ledger:
+    <<: *app
+    image: fraudstream/ledger:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: ledger, MIGRATIONS: ledger }
+    ports: ['3005:3005'] # /health and /metrics
+    environment:
+      <<: *app-env
+      PORT: '3005'
+    depends_on:
+      postgres: { condition: service_healthy }
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3005/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
 volumes:
   kafka-1-data:
   kafka-2-data:

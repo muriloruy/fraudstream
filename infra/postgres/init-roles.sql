@@ -15,9 +15,12 @@ CREATE ROLE anomaly_svc     LOGIN PASSWORD :'anomaly_password';     -- anomaly-s
 CREATE ROLE decision_svc    LOGIN PASSWORD :'decision_password';    -- decision-engine
 CREATE ROLE ledger_svc      LOGIN PASSWORD :'ledger_password';      -- ledger
 CREATE ROLE alerts_svc      LOGIN PASSWORD :'alerts_password';      -- alerts-gateway
+-- Read-only auditor for `pnpm ledger:reconcile`; owners grant it SELECT in their migrations.
+CREATE ROLE reconciler      LOGIN PASSWORD :'reconciler_password';
 
 GRANT CONNECT ON DATABASE fraudstream TO
-  payments_svc, vault_svc, fraud_rules_svc, anomaly_svc, decision_svc, ledger_svc, alerts_svc;
+  payments_svc, vault_svc, fraud_rules_svc, anomaly_svc, decision_svc, ledger_svc, alerts_svc,
+  reconciler;
 
 CREATE SCHEMA payments    AUTHORIZATION payments_svc;
 CREATE SCHEMA vault       AUTHORIZATION vault_svc;
@@ -39,3 +42,6 @@ ALTER ROLE anomaly_svc     SET search_path = anomaly;
 ALTER ROLE decision_svc    SET search_path = decision;
 ALTER ROLE ledger_svc      SET search_path = ledger;
 ALTER ROLE alerts_svc      SET search_path = alerts, auth;
+ALTER ROLE reconciler      SET search_path = ledger, decision;
+-- Defence in depth on top of SELECT-only grants: the reconciler cannot write even by mistake.
+ALTER ROLE reconciler      SET default_transaction_read_only = on;

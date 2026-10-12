@@ -3,6 +3,7 @@ import {
   CardToken,
   CountryCode,
   CurrencyCode,
+  fromCents,
   DecimalString,
   MaskedPan,
   Mcc,
@@ -99,5 +100,16 @@ describe('identifiers', () => {
     expect(AccountId.safeParse("acc'; DROP TABLE x;--").success).toBe(false);
     expect(AccountId.safeParse('').success).toBe(false);
     expect(AccountId.safeParse('a'.repeat(65)).success).toBe(false);
+  });
+});
+
+describe('fromCents', () => {
+  it('is the exact inverse of toCents, including negative deltas', () => {
+    for (const v of ['0.01', '0.10', '1250.90', '9999999999999999.99', '7']) {
+      expect(toCents(fromCents(toCents(v)))).toBe(toCents(v));
+    }
+    expect(fromCents(125090n)).toBe('1250.90');
+    expect(fromCents(-5n)).toBe('-0.05');
+    expect(fromCents(0n)).toBe('0.00');
   });
 });

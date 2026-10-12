@@ -9,7 +9,8 @@ export type ServiceRole =
   | 'anomaly_svc'
   | 'decision_svc'
   | 'ledger_svc'
-  | 'alerts_svc';
+  | 'alerts_svc'
+  | 'reconciler';
 
 const ROLE_PASSWORD = 'test-password';
 const PASSWORD_VARS = [
@@ -20,6 +21,7 @@ const PASSWORD_VARS = [
   'decision',
   'ledger',
   'alerts',
+  'reconciler',
 ].flatMap((service) => ['-v', `${service}_password=${ROLE_PASSWORD}`]);
 
 export interface TestPostgres {
