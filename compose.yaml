@@ -1,0 +1,6 @@
+# Entry point for `docker compose` from the repository root. Services live in infra/.
+name: fraudstream
+
+include:
+  - path: infra/docker-compose.yml
+    env_file: .env

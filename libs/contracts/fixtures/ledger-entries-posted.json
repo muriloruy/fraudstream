@@ -1,0 +1,29 @@
+{
+  "eventId": "0192f1a2-7c40-7000-9000-000000000005",
+  "eventType": "LedgerEntriesPosted",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-12T18:00:00.050Z",
+  "producer": "ledger",
+  "correlationId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+  "causationId": "0192f1a2-7c40-7000-9000-000000000004",
+  "payload": {
+    "transactionId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+    "accountId": "acc_000123",
+    "journalId": "0192f1a2-7c41-7000-8000-0000000000aa",
+    "entries": [
+      {
+        "ledgerAccount": "customer:acc_000123",
+        "direction": "DEBIT",
+        "amount": "1250.90",
+        "currency": "BRL"
+      },
+      {
+        "ledgerAccount": "merchant:mer_771",
+        "direction": "CREDIT",
+        "amount": "1250.90",
+        "currency": "BRL"
+      }
+    ],
+    "postedAt": "2026-10-12T18:00:00.300Z"
+  }
+}

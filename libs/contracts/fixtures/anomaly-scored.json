@@ -1,0 +1,23 @@
+{
+  "eventId": "0192f1a2-7c40-7000-9000-000000000003",
+  "eventType": "AnomalyScored",
+  "eventVersion": 1,
+  "occurredAt": "2026-10-12T18:00:00.050Z",
+  "producer": "anomaly-scorer",
+  "correlationId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+  "causationId": "0192f1a2-7c40-7000-9000-000000000001",
+  "payload": {
+    "transactionId": "0192f1a2-7c3e-7a10-8b2c-1d2e3f405162",
+    "accountId": "acc_000123",
+    "anomalyScore": 0.81,
+    "features": {
+      "amountZ": 4.2,
+      "interArrivalZ": -2.1,
+      "newMerchant": true,
+      "hourOfDayDeviation": 0.7
+    },
+    "baselineSampleSize": 143,
+    "modelVersion": "ewma-1.0",
+    "scoredAt": "2026-10-12T18:00:00.095Z"
+  }
+}
