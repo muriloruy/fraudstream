@@ -31,6 +31,8 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
       ],
       '@typescript-eslint/consistent-type-imports': 'error',
+      // NestJS modules are empty classes carrying a @Module() decorator.
+      '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       // SPEC §7: parameterized SQL only. Interpolating values into a SQL string
       // passed to `.query()` is the classic injection vector, so forbid it outright.

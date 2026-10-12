@@ -20,6 +20,8 @@
     "skipLibCheck": true,
     "declaration": true,
     "sourceMap": true,
-    "customConditions": ["@fraudstream/source"]
+    "customConditions": ["@fraudstream/source"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }

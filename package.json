@@ -20,7 +20,9 @@
     "topics:verify": "bash scripts/verify-topics.sh",
     "prepare": "husky",
     "db:migrate": "tsx --conditions=@fraudstream/source scripts/db-migrate.ts",
-    "test:integration": "nx run-many -t test:integration"
+    "test:integration": "nx run-many -t test:integration",
+    "env:init": "tsx scripts/env-init.ts",
+    "vault:rotate": "pnpm --filter @fraudstream/card-vault rotate"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

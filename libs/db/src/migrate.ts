@@ -1,4 +1,5 @@
 import { runner } from 'node-pg-migrate';
+import { resolveDatabaseUrl } from './pool.js';
 
 export interface MigrateOptions {
   databaseUrl: string;
@@ -15,7 +16,7 @@ export interface MigrateOptions {
  */
 export async function migrate(options: MigrateOptions): Promise<string[]> {
   const applied = await runner({
-    databaseUrl: options.databaseUrl,
+    databaseUrl: resolveDatabaseUrl(options.databaseUrl),
     dir: options.dir,
     direction: 'up',
     count: Infinity,

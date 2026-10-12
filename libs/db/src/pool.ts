@@ -9,16 +9,35 @@ export interface PoolConfig {
   /** Shown in pg_stat_activity, e.g. the service name. */
   applicationName: string;
   max?: number;
+  /** Errors on idle connections (e.g. the database restarted). Defaults to ignoring them. */
+  onIdleError?: (error: Error) => void;
+}
+
+/**
+ * `.env` connection strings point at `localhost` for tools run on the host. Inside compose,
+ * `DATABASE_HOST=postgres` swaps only the host, so credentials stay defined in one place.
+ */
+export function resolveDatabaseUrl(url: string, host = process.env.DATABASE_HOST): string {
+  if (!host) return url;
+  const parsed = new URL(url);
+  parsed.hostname = host;
+  return parsed.toString();
 }
 
 export function createPool(config: PoolConfig): Pool {
-  return new pg.Pool({
-    connectionString: config.connectionString,
+  const pool = new pg.Pool({
+    connectionString: resolveDatabaseUrl(config.connectionString),
     application_name: config.applicationName,
     max: config.max ?? 10,
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 30_000,
   });
+  // Without a listener, an idle connection dropped by the server (restart, failover) emits an
+  // unhandled 'error' and crashes the process. The pool already discards that client.
+  pool.on('error', (error) => {
+    config.onIdleError?.(error);
+  });
+  return pool;
 }
 
 /**

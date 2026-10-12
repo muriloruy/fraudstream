@@ -73,3 +73,22 @@ describe('REDACT_PATHS', () => {
     );
   });
 });
+
+describe('secrets', async () => {
+  const { decodeBase64Key, isPlaceholderSecret } = await import('./index.js');
+
+  it('detects .env.example placeholders', () => {
+    expect(isPlaceholderSecret('change-me')).toBe(true);
+    expect(isPlaceholderSecret('base64:REPLACE_WITH_32_RANDOM_BYTES')).toBe(true);
+    expect(isPlaceholderSecret('9f8c2b...')).toBe(false);
+  });
+
+  it('decodes base64 keys of the right size only', () => {
+    const raw = Buffer.alloc(32, 7);
+    expect(decodeBase64Key('K', `base64:${raw.toString('base64')}`, 32)).toEqual(raw);
+    expect(() => decodeBase64Key('K', 'base64:REPLACE_WITH_32_RANDOM_BYTES', 32)).toThrow(
+      /K must be/,
+    );
+    expect(() => decodeBase64Key('K', raw.toString('base64'), 32)).toThrow(/K must be/);
+  });
+});

@@ -25,4 +25,4 @@ export function createLogger(config: LoggerConfig): Logger {
     : pino(loggerOptions(config));
 }
 
-export type { Logger };
+export type { DestinationStream, Logger };

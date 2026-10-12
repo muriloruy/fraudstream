@@ -10,14 +10,14 @@
 
 ## 2. card-vault (SPEC §5.2, §6.2)
 
-- [ ] 2.1 Scaffold NestJS app `apps/card-vault` with the SPEC §12 layout, Zod-validated config (refuses placeholder secrets when `NODE_ENV=production`); verify it boots and `/health/live` returns 200
-- [ ] 2.2 Migration `migrations/vault/001_cards.sql` (table from SPEC §5.2) plus `vault.audit_log`; verify `pnpm db:migrate` applies it with the `vault_svc` role
-- [ ] 2.3 Domain crypto: AES-256-GCM encrypt/decrypt with random 12-byte IV, HMAC-SHA256 lookup, keyring by version, Buffer zeroing; unit tests for round-trip, unique IVs, tamper detection and wrong-key failure
-- [ ] 2.4 `POST /internal/tokenize` with service-token guard and dedup by `pan_hmac`; integration tests for new card, same-card-same-token and 401 without token
-- [ ] 2.5 `POST /internal/detokenize` restricted to `vault-admin`, audited allow/deny; integration test asserts 403 for service token and an audit row for each attempt
-- [ ] 2.6 `scripts/vault-rotate.ts` + `pnpm vault:rotate` re-encrypting in batches; integration test rotates v1→v2 and verifies tokens unchanged and decryption works
-- [ ] 2.7 Add `card-vault` to compose with no published ports, internal network only; verify `curl localhost:<port>` from host fails while `transaction-api` container can reach it
-- [ ] 2.8 Write ADR-008 (vault design: scope reduction, HMAC lookup, key versioning)
+- [x] 2.1 Scaffold NestJS app `apps/card-vault` with the SPEC §12 layout, Zod-validated config (refuses placeholder secrets when `NODE_ENV=production`); verify it boots and `/health/live` returns 200
+- [x] 2.2 Migration `migrations/vault/001_cards.sql` (table from SPEC §5.2) plus `vault.audit_log`; verify `pnpm db:migrate` applies it with the `vault_svc` role
+- [x] 2.3 Domain crypto: AES-256-GCM encrypt/decrypt with random 12-byte IV, HMAC-SHA256 lookup, keyring by version, Buffer zeroing; unit tests for round-trip, unique IVs, tamper detection and wrong-key failure
+- [x] 2.4 `POST /internal/tokenize` with service-token guard and dedup by `pan_hmac`; integration tests for new card, same-card-same-token and 401 without token
+- [x] 2.5 `POST /internal/detokenize` restricted to `vault-admin`, audited allow/deny; integration test asserts 403 for service token and an audit row for each attempt
+- [x] 2.6 `scripts/vault-rotate.ts` + `pnpm vault:rotate` re-encrypting in batches; integration test rotates v1→v2 and verifies tokens unchanged and decryption works
+- [x] 2.7 Add `card-vault` to compose with no published ports, internal network only; verify `curl localhost:<port>` from host fails while `transaction-api` container can reach it
+- [x] 2.8 Write ADR-008 (vault design: scope reduction, HMAC lookup, key versioning)
 
 ## 3. transaction-api ingestion (SPEC §3.3, §5.1, §6.1)
 
