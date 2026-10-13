@@ -50,6 +50,12 @@ export interface HandlerContext {
   traceparent: string;
   /** An envelope caused by the consumed event (same correlation id, causation = its id). */
   child<P>(input: ChildEventInput<P>): Envelope<P>;
+  /**
+   * Runs `fn` once the DB transaction has committed (not on rollback or retry), for in-process
+   * side effects that must never announce uncommitted state, such as SSE pushes. Errors thrown
+   * by `fn` are logged and do not affect the message.
+   */
+  afterCommit(fn: () => void): void;
 }
 
 export interface EventHandler {
@@ -281,8 +287,9 @@ export class ConsumerRuntime {
     const traceparent = incomingTraceparent(headers);
 
     return retryInProcess(
-      () =>
-        withTransaction(this.options.pool, async (tx): Promise<Outcome> => {
+      async () => {
+        const committed: (() => void)[] = []; // fresh per attempt: a retried attempt's hooks never run
+        const outcome = await withTransaction(this.options.pool, async (tx): Promise<Outcome> => {
           if (!(await this.inbox.claim(tx, this.group, envelope.eventId))) return 'duplicate';
           await handler.handle(envelope, {
             tx,
@@ -293,9 +300,19 @@ export class ConsumerRuntime {
             headers,
             traceparent,
             child: (input) => childEnvelope(envelope, input),
+            afterCommit: (fn) => committed.push(fn),
           });
           return 'ok';
-        }),
+        });
+        for (const fn of committed) {
+          try {
+            fn();
+          } catch (error) {
+            this.options.logger?.warn({ err: describeError(error) }, 'afterCommit hook failed');
+          }
+        }
+        return outcome;
+      },
       (error) => classifyError(error) === 'transient',
       this.options.inProcessDelaysMs ?? IN_PROCESS_DELAYS_MS,
     );

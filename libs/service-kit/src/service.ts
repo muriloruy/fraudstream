@@ -6,6 +6,7 @@ import {
   Inject,
   Module,
   type DynamicModule,
+  type ModuleMetadata,
   type OnApplicationBootstrap,
   type OnApplicationShutdown,
 } from '@nestjs/common';
@@ -75,9 +76,16 @@ export interface ConsumerServiceOptions {
   logDestination?: DestinationStream;
   /** Extra overrides for every consumer runtime (tests use shorter retry delays). */
   runtimeOverrides?: Partial<ConstructorParameters<typeof ConsumerRuntime>[0]>;
+  /**
+   * HTTP surface of services that also serve requests (alerts-gateway). Providers can inject
+   * `SERVICE_DEPS` to share the pool, producer and outbox with the consumers.
+   */
+  http?: Pick<ModuleMetadata, 'imports' | 'controllers' | 'providers'>;
 }
 
-const DEPS = Symbol('SERVICE_DEPS');
+/** Injection token of the `ServiceDeps` of a consumer service. */
+export const SERVICE_DEPS = Symbol('SERVICE_DEPS');
+const DEPS = SERVICE_DEPS;
 const OPTIONS = Symbol('SERVICE_OPTIONS');
 
 @Controller('metrics')
@@ -162,9 +170,11 @@ class ConsumerServiceModule {
         LoggerModule.forRoot({
           pinoHttp: options.logDestination ? [logOptions, options.logDestination] : logOptions,
         }),
+        ...(options.http?.imports ?? []),
       ],
-      controllers: [HealthController, MetricsController],
+      controllers: [HealthController, MetricsController, ...(options.http?.controllers ?? [])],
       providers: [
+        ...(options.http?.providers ?? []),
         { provide: OPTIONS, useValue: options },
         {
           provide: DEPS,
