@@ -39,6 +39,8 @@ export interface Outcome {
   components: { ruleScore: number | null; anomalyScore: number | null };
   reasons: string[];
   partial: boolean;
+  /** Weights actually applied: rules only on a rules-only timeout, anomaly only without rules. */
+  weights: { rules: number; anomaly: number };
 }
 
 const round4 = (x: number) => Math.round(x * 10_000) / 10_000;
@@ -85,12 +87,14 @@ export function decide(
       components,
       reasons: [...reasons, 'rule evaluation unavailable (timeout)'],
       partial: true,
+      weights: { rules: 0, anomaly: 1 },
     };
   }
 
   let finalScore = rules.ruleScore;
+  let wAnomaly = 0;
   if (score) {
-    const wAnomaly =
+    wAnomaly =
       score.baselineSampleSize >= cfg.minBaseline ? cfg.anomalyWeight : cfg.coldStartAnomalyWeight;
     finalScore = (1 - wAnomaly) * rules.ruleScore + wAnomaly * score.anomalyScore;
   } else {
@@ -105,7 +109,14 @@ export function decide(
       : finalScore < cfg.declineFrom
         ? 'REVIEW'
         : 'DECLINE';
-  return { decision, finalScore, components, reasons, partial: !score };
+  return {
+    decision,
+    finalScore,
+    components,
+    reasons,
+    partial: !score,
+    weights: { rules: round4(1 - wAnomaly), anomaly: wAnomaly },
+  };
 }
 
 /** Short hash of the thresholds and weights, stored with every decision for auditability. */

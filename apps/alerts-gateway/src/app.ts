@@ -37,7 +37,13 @@ export async function createApp(
     config,
     readinessTopic: Topics.decisions,
     consumers: (deps) => [
-      { group: ConsumerGroups.alertsGateway, handlers: gatewayFor(deps).alerts.handlers() },
+      {
+        group: ConsumerGroups.alertsGateway,
+        handlers: gatewayFor(deps).alerts.handlers(),
+        // accounts.profiles.v1 is compacted: a tombstone removes the profile.
+        onTombstone: (accountId, tx) =>
+          gatewayFor(deps).alertsRepository.deleteProfile(tx, accountId),
+      },
     ],
     jobs: (deps) => [
       {

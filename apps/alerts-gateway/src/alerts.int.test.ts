@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { request, type IncomingMessage } from 'node:http';
 import { readFileSync } from 'node:fs';
 import {
+  AccountProfileUpserted,
   AnalystFeedbackRecorded,
   createEnvelope,
   DlqHeaders,
@@ -421,8 +422,91 @@ describe('timeline and metrics', () => {
     await processed(posted.eventId);
 
     const res = await http('GET', `/v1/accounts/${account}/timeline`, { bearer: analyst });
-    const items = (res.json() as { items: { kind: string }[] }).items;
+    const items = (res.json() as { items: { kind: string; amount: unknown }[] }).items;
     expect(items.map((i) => i.kind)).toEqual(['LEDGER', 'DECISION']);
+    expect(
+      items.every((i) => JSON.stringify(i.amount) === JSON.stringify(txFixture.payload.amount)),
+    ).toBe(true);
+  });
+
+  it('shows profile, balance and activity on the account view', async () => {
+    const account = 'acc_view360';
+    const profile = createEnvelope({
+      eventType: AccountProfileUpserted.eventType,
+      eventVersion: 1,
+      producer: 'simulator',
+      correlationId: randomUUID(),
+      payload: {
+        accountId: account,
+        homeCountry: 'BR' as const,
+        homeCity: 'Recife',
+        createdAt: new Date().toISOString(),
+        riskTier: 'HIGH' as const,
+        creditLimit: '5000.00',
+      },
+    });
+    await publish(Topics.accountProfiles, [profile]);
+    const tx = transaction(account);
+    await publish(Topics.transactions, [tx]);
+    const posting = (amount: string) =>
+      createEnvelope({
+        eventType: LedgerEntriesPosted.eventType,
+        eventVersion: 1,
+        producer: 'ledger',
+        correlationId: randomUUID(),
+        payload: {
+          transactionId: uuidv7(),
+          accountId: account,
+          journalId: randomUUID(),
+          entries: [
+            {
+              ledgerAccount: `customer:${account}`,
+              direction: 'DEBIT' as const,
+              amount,
+              currency: 'BRL' as const,
+            },
+            {
+              ledgerAccount: 'merchant:m',
+              direction: 'CREDIT' as const,
+              amount,
+              currency: 'BRL' as const,
+            },
+          ],
+          postedAt: new Date().toISOString(),
+        },
+      });
+    const first = posting('10.10');
+    const second = posting('0.20');
+    const postings = [first, second];
+    await publish(Topics.ledgerEntries, [first, second, first]); // one duplicate
+    for (const p of [profile, tx, ...postings]) await processed(p.eventId);
+
+    const res = await http('GET', `/v1/accounts/${account}`, { bearer: analyst });
+    expect(res.json()).toMatchObject({
+      accountId: account,
+      profile: { homeCountry: 'BR', homeCity: 'Recife', riskTier: 'HIGH', creditLimit: '5000.00' },
+      balance: { currency: 'BRL', balance: '-10.30' }, // the duplicate posting is not applied twice
+      stats: { transactions: 1, averageAmount: '1250.90' },
+    });
+    expect(
+      (await http('GET', '/v1/accounts/unknown_account', { bearer: analyst })).json(),
+    ).toMatchObject({
+      profile: null,
+      balance: null,
+    });
+  });
+
+  it('puts amount, merchant, country and fired rules on queue rows', async () => {
+    const { alert } = await reviewAlert('acc_columns');
+    const res = await http('GET', '/v1/alerts?accountId=acc_columns', { bearer: analyst });
+    const [row] = (res.json() as { items: Record<string, unknown>[] }).items;
+    expect(row).toMatchObject({
+      alertId: alert.alert_id,
+      amount: txFixture.payload.amount,
+      merchantName: txFixture.payload.merchant.name,
+      country: txFixture.payload.merchant.country,
+    });
+    expect(row).not.toHaveProperty('snapshot');
   });
 
   it('summarizes decision rates and p95 latency for the window', async () => {

@@ -42,7 +42,24 @@ type ResolveBody = z.infer<typeof ResolveBody>;
 
 export const SummaryQuery = z.strictObject({ window: z.string().max(8).default('15m') });
 
-const listItem = ({ snapshot: _snapshot, ...rest }: Alert) => rest;
+interface SnapshotShape {
+  transaction?: { amount?: unknown; merchant?: { name?: unknown; country?: unknown } };
+  decision?: { breakdown?: { firedRules?: { ruleId: string; name: string }[] } | null };
+}
+
+/** Queue row: the alert without its snapshot, plus the columns the table shows (SPEC §8.2). */
+const listItem = ({ snapshot, ...rest }: Alert) => {
+  const s = snapshot as SnapshotShape;
+  return {
+    ...rest,
+    amount: s.transaction?.amount ?? null,
+    merchantName:
+      typeof s.transaction?.merchant?.name === 'string' ? s.transaction.merchant.name : null,
+    country:
+      typeof s.transaction?.merchant?.country === 'string' ? s.transaction.merchant.country : null,
+    firedRules: (s.decision?.breakdown?.firedRules ?? []).map((r) => r.ruleId),
+  };
+};
 
 @Controller()
 @Authorized('analyst')
@@ -115,6 +132,13 @@ export class AlertsController {
     return this.mapErrors(() =>
       this.gateway.alerts.resolve(id, principal, body.verdict, body.note, this.ipHash(req)),
     );
+  }
+
+  /** Profile, balance and recent activity of an account (SPEC §8.2 Account Timeline). */
+  @Get('v1/accounts/:accountId')
+  async account(@Param('accountId', new ZodValidationPipe(AccountId)) accountId: string) {
+    const view = await this.gateway.alerts.account(accountId);
+    return { accountId, ...view };
   }
 
   /** Last 100 decisions and ledger postings of the account, newest first. */

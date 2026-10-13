@@ -185,6 +185,50 @@ describe('fraud.scores.v1 (anomaly-scorer → decision-engine)', () => {
 });
 
 describe('fraud.decisions.v1 (decision-engine → transaction-api)', () => {
+  it('carries the optional score breakdown built from real rule and score payloads', () => {
+    const [tx] = authorizationEvents();
+    if (!tx) throw new Error('fixture missing');
+    const ruleset = rules.loadRuleset();
+    const context: rules.RuleContext = {
+      countInVelocityWindow: 9,
+      sumInAmountWindowCents: 0n,
+      smallInTestingWindow: 4,
+      historyCount: 0,
+      historySumCents: 0n,
+      last: null,
+      knownMerchant: false,
+      blocklistHits: [],
+      profile: null,
+    };
+    const ruleResult = rules.toResult(
+      tx,
+      ruleset,
+      rules.evaluate(rules.toFacts(tx), context, ruleset),
+      new Date(),
+    );
+    const scored = scorer.toScored(
+      tx,
+      scorer.score(null, 'MEDIUM', scorer.toObservation(tx, true)),
+      new Date(),
+    );
+    const cfg = { ...decision.DEFAULT_FUSION, approveBelow: 0.4, declineFrom: 0.75 };
+    const outcome = decision.decide(ruleResult, scored, cfg);
+    const event = decision.toDecisionEvent(
+      tx.transactionId,
+      tx.accountId,
+      outcome,
+      new Date(),
+      tx.requestedAt,
+      decision.toBreakdown(ruleResult, scored, outcome, cfg, 'fusion-test'),
+    );
+    expect(event.breakdown?.firedRules.length).toBeGreaterThan(0);
+    for (const consumer of ['transaction-api', 'alerts-gateway'] as const) {
+      expect(
+        consume(onTheWire(decision.PRODUCER, FraudDecisionMade, event), CONSUMES[consumer]).payload,
+      ).toEqual(event);
+    }
+  });
+
   const cfg = { ...decision.DEFAULT_FUSION, approveBelow: 0.4, declineFrom: 0.75 };
   const ruleParts = [
     null,

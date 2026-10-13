@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import {
+  AccountProfileUpserted,
   AnalystFeedbackRecorded,
+  fromCents,
+  toCents,
   createEnvelope,
   FraudDecisionMade,
   LedgerEntriesPosted,
@@ -108,13 +111,27 @@ export class AlertsService {
 
       on(LedgerEntriesPosted, async (envelope, ctx) => {
         const p = envelope.payload;
-        await this.alerts.recordAccountEvent(ctx.tx, {
+        const isNew = await this.alerts.recordAccountEvent(ctx.tx, {
           accountId: p.accountId,
           kind: 'LEDGER',
           transactionId: p.transactionId,
           occurredAt: p.postedAt,
           payload: p,
         });
+        if (!isNew) return;
+        // Balance of the customer account: credits minus debits, in integer cents.
+        const mine = p.entries.filter((e) => e.ledgerAccount === `customer:${p.accountId}`);
+        const first = mine[0];
+        if (!first) return;
+        const cents = mine.reduce(
+          (sum, e) => sum + (e.direction === 'CREDIT' ? toCents(e.amount) : -toCents(e.amount)),
+          0n,
+        );
+        await this.alerts.addToBalance(ctx.tx, p.accountId, first.currency, fromCents(cents));
+      }),
+
+      on(AccountProfileUpserted, async (envelope, ctx) => {
+        await this.alerts.upsertProfile(ctx.tx, envelope.payload);
       }),
     ];
   }
@@ -201,6 +218,10 @@ export class AlertsService {
     return this.alerts.timeline(this.pool, accountId);
   }
 
+  account(accountId: string) {
+    return this.alerts.account(this.pool, accountId);
+  }
+
   async summary(windowSeconds: number): Promise<Summary> {
     return summarize(await this.alerts.decisionCounts(this.pool, windowSeconds), windowSeconds);
   }
@@ -227,6 +248,7 @@ function snapshotOf(d: FraudDecisionMadeV1, transaction: Record<string, unknown>
       partial: d.partial,
       decidedAt: d.decidedAt,
       latencyMs: d.latencyMs,
+      breakdown: d.breakdown ?? null,
     },
   };
 }
