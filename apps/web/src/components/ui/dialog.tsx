@@ -1,7 +1,11 @@
 import * as RadixDialog from '@radix-ui/react-dialog';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
-/** Modal dialog: focus trap, Esc to close, focus returns to the trigger (Radix). */
+/**
+ * Modal dialog (Radix): focus trap, Esc to close. Focus returns to whatever opened it; this is
+ * done explicitly because the dialogs are controlled (no Radix Trigger), and without a Trigger
+ * focus otherwise falls back to <body> and a keyboard user loses their place.
+ */
 export function Dialog({
   open,
   onOpenChange,
@@ -15,13 +19,24 @@ export function Dialog({
   description?: string;
   children: ReactNode;
 }) {
+  const opener = useRef<HTMLElement | null>(null);
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-40 bg-black/40" />
         <RadixDialog.Content
           className="fixed left-1/2 top-1/2 z-50 w-[min(92vw,480px)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-surface p-6 shadow-xl focus-visible:outline-none"
-          aria-describedby={description ? undefined : undefined}
+          onOpenAutoFocus={() => {
+            // still the element that opened the dialog: Radix moves focus right after this
+            opener.current =
+              document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          }}
+          onCloseAutoFocus={(event) => {
+            if (opener.current?.isConnected) {
+              event.preventDefault();
+              opener.current.focus();
+            }
+          }}
         >
           <RadixDialog.Title className="text-lg font-semibold text-fg">{title}</RadixDialog.Title>
           {description ? (

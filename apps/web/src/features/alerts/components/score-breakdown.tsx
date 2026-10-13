@@ -113,13 +113,15 @@ export function ScoreBreakdown({ decision }: { decision: Decision }) {
             <dt className="text-fg-muted">New merchant</dt>
             <dd>{b.anomaly.features.newMerchant ? 'yes' : 'no'}</dd>
           </div>
-          <p className="col-span-full text-xs text-fg-muted">
-            Baseline of {b.anomaly.baselineSampleSize} transactions · model {b.anomaly.modelVersion}
-          </p>
         </dl>
       ) : (
         <p className="text-sm text-fg-muted">Anomaly score not available for this decision.</p>
       )}
+      {b?.anomaly ? (
+        <p className="mt-2 text-xs text-fg-muted">
+          Baseline of {b.anomaly.baselineSampleSize} transactions · model {b.anomaly.modelVersion}
+        </p>
+      ) : null}
     </Card>
   );
 }

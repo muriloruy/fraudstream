@@ -30,7 +30,8 @@ let refreshing: Promise<boolean> | null = null;
 export function refreshSession(fetchImpl: typeof fetch = fetch): Promise<boolean> {
   refreshing ??= (async () => {
     try {
-      const res = await fetchImpl('/auth/refresh', { method: 'POST', credentials: 'same-origin' });
+      const url = new URL('/auth/refresh', window.location.origin);
+      const res = await fetchImpl(new Request(url, { method: 'POST', credentials: 'same-origin' }));
       if (!res.ok) {
         session.clear();
         return false;

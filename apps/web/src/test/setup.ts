@@ -10,7 +10,7 @@ afterEach(() => {
 
 /** Browser APIs used by Radix and the layout that jsdom does not implement. */
 const noop = () => undefined;
-if (!('matchMedia' in window)) {
+if (typeof window.matchMedia !== 'function') {
   Object.defineProperty(window, 'matchMedia', {
     value: (query: string) => ({
       matches: false,
@@ -24,7 +24,7 @@ if (!('matchMedia' in window)) {
     }),
   });
 }
-if (!('ResizeObserver' in window)) {
+if (typeof window.ResizeObserver !== 'function') {
   Object.defineProperty(window, 'ResizeObserver', {
     value: class {
       observe = noop;
