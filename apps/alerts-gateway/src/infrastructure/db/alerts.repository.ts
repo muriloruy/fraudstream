@@ -1,4 +1,5 @@
 import type {
+  AccountProfileUpsertedV1,
   FraudDecisionMadeV1,
   LedgerEntriesPostedV1,
   TransactionAuthorizationRequestedV1,
@@ -82,11 +83,13 @@ export class AlertsRepository {
   // ---- projections (consumer side) ----------------------------------------------------------
 
   async rememberTransaction(db: Db, p: TransactionAuthorizationRequestedV1): Promise<void> {
-    // Masked PAN only: the token, device and IP hashes are not needed by analysts.
+    // Masked PAN only, no vault token. The peppered device id hash identifies a device across
+    // alerts (SPEC §8.2 Alert Detail); the IP hash is not needed by analysts and is left out.
     const details = {
       amount: p.amount,
       merchant: p.merchant,
       maskedPan: p.maskedPan,
+      deviceIdHash: p.device.deviceIdHash,
       channel: p.channel,
       entryMode: p.entryMode,
       ...(p.geo ? { geo: p.geo } : {}),
@@ -150,6 +153,68 @@ export class AlertsRepository {
       [e.accountId],
     );
     return true;
+  }
+
+  async upsertProfile(db: Db, p: AccountProfileUpsertedV1): Promise<void> {
+    await db.query(
+      `INSERT INTO alerts.account_profiles (account_id, home_country, home_city, risk_tier, credit_limit)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (account_id) DO UPDATE SET home_country = EXCLUDED.home_country,
+         home_city = EXCLUDED.home_city, risk_tier = EXCLUDED.risk_tier,
+         credit_limit = EXCLUDED.credit_limit, updated_at = now()`,
+      [p.accountId, p.homeCountry, p.homeCity ?? null, p.riskTier, p.creditLimit],
+    );
+  }
+
+  async deleteProfile(db: Db, accountId: string): Promise<void> {
+    await db.query('DELETE FROM alerts.account_profiles WHERE account_id = $1', [accountId]);
+  }
+
+  /** Signed decimal-string delta, applied in SQL numeric: no floating point (ADR-009). */
+  async addToBalance(db: Db, accountId: string, currency: string, delta: string): Promise<void> {
+    await db.query(
+      `INSERT INTO alerts.account_balances AS b (account_id, currency, balance) VALUES ($1, $2, $3::numeric)
+       ON CONFLICT (account_id) DO UPDATE SET balance = b.balance + EXCLUDED.balance, updated_at = now()`,
+      [accountId, currency, delta],
+    );
+  }
+
+  async account(db: Db, accountId: string) {
+    const { rows } = await db.query<{
+      profile: {
+        homeCountry: string;
+        homeCity: string | null;
+        riskTier: string;
+        creditLimit: string;
+      } | null;
+      balance: { currency: string; balance: string } | null;
+      stats: {
+        transactions: number;
+        averageAmount: string | null;
+        approve: number;
+        review: number;
+        decline: number;
+        openAlerts: number;
+      };
+    }>(
+      `SELECT
+         (SELECT json_build_object('homeCountry', home_country, 'homeCity', home_city,
+                 'riskTier', risk_tier, 'creditLimit', credit_limit::text)
+            FROM alerts.account_profiles WHERE account_id = $1) AS profile,
+         (SELECT json_build_object('currency', currency, 'balance', balance::text)
+            FROM alerts.account_balances WHERE account_id = $1) AS balance,
+         json_build_object(
+           'transactions', (SELECT count(*) FROM alerts.transactions_seen WHERE account_id = $1),
+           'averageAmount', (SELECT round(avg((details->'amount'->>'value')::numeric), 2)::text
+                               FROM alerts.transactions_seen WHERE account_id = $1),
+           'approve', (SELECT count(*) FROM alerts.account_events WHERE account_id = $1 AND kind = 'DECISION' AND payload->>'decision' = 'APPROVE'),
+           'review', (SELECT count(*) FROM alerts.account_events WHERE account_id = $1 AND kind = 'DECISION' AND payload->>'decision' = 'REVIEW'),
+           'decline', (SELECT count(*) FROM alerts.account_events WHERE account_id = $1 AND kind = 'DECISION' AND payload->>'decision' = 'DECLINE'),
+           'openAlerts', (SELECT count(*) FROM alerts.alerts WHERE account_id = $1 AND status IN ('OPEN','IN_PROGRESS'))
+         ) AS stats`,
+      [accountId],
+    );
+    return rows[0] ?? null;
   }
 
   async countDecision(db: Db, d: FraudDecisionMadeV1): Promise<void> {
@@ -232,11 +297,15 @@ export class AlertsRepository {
       transactionId: string;
       occurredAt: string;
       payload: FraudDecisionMadeV1 | LedgerEntriesPostedV1;
+      amount: { value: string; currency: string } | null;
     }>(
-      `SELECT kind, transaction_id AS "transactionId",
-              to_char(occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "occurredAt", payload
-         FROM alerts.account_events WHERE account_id = $1
-        ORDER BY occurred_at DESC, id DESC LIMIT 100`,
+      `SELECT e.kind, e.transaction_id AS "transactionId",
+              to_char(e.occurred_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "occurredAt",
+              e.payload, t.details->'amount' AS amount
+         FROM alerts.account_events e
+         LEFT JOIN alerts.transactions_seen t USING (transaction_id)
+        WHERE e.account_id = $1
+        ORDER BY e.occurred_at DESC, e.id DESC LIMIT 100`,
       [accountId],
     );
     return rows;

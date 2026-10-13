@@ -131,6 +131,24 @@ jobs:
         run: docker compose --profile core up -d --build --wait --wait-timeout 300
       - name: End-to-end tests (card testing burst, ordinary purchase)
         run: pnpm test:e2e
+      - name: Demo users for the dashboard
+        run: pnpm users:seed
+      - name: Install Chromium for Playwright and Lighthouse
+        run: pnpm --filter @fraudstream/web exec playwright install --with-deps chromium
+      - name: Dashboard main flow (Playwright, SPEC §13.4)
+        run: pnpm --filter @fraudstream/web test:e2e:web
+      - name: Lighthouse on /alerts (performance >= 90)
+        run: pnpm --filter @fraudstream/web lighthouse
+      - name: Upload Playwright and Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-e2e-reports
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+            apps/web/lighthouse/
+          if-no-files-found: ignore
       - name: Service logs
         if: failure()
         run: docker compose --profile core logs --no-color --tail 300

@@ -397,6 +397,22 @@ services:
       retries: 12
       start_period: 15s
 
+  web:
+    image: fraudstream/web:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/web.Dockerfile
+    restart: *restart
+    profiles: [core, lowmem]
+    ports: ['8081:8081'] # analyst dashboard (same-origin proxy to alerts-gateway)
+    depends_on:
+      alerts-gateway: { condition: service_healthy }
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8081/']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
 volumes:
   kafka-1-data:
   kafka-2-data:

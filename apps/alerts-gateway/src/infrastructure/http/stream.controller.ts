@@ -15,6 +15,11 @@ interface StreamResponse {
   on(event: 'drain' | 'close', listener: () => void): void;
 }
 
+function lastEventIdQuery(req: GatewayRequest): string | undefined {
+  const value = req.query?.lastEventId;
+  return typeof value === 'string' ? value : undefined;
+}
+
 /** Per-connection backlog before decision samples are dropped (SPEC §6.8 backpressure). */
 const QUEUE_LIMIT = 500;
 
@@ -50,7 +55,9 @@ export class StreamController {
         res.write(formatSse(event));
       }
     };
-    const lastEventId = Number(req.headers['last-event-id']);
+    // EventSource resends Last-Event-ID on its own reconnects; a client that had to open a new
+    // EventSource (expired session) passes it as ?lastEventId= instead (a position, not a secret).
+    const lastEventId = Number(req.headers['last-event-id'] ?? lastEventIdQuery(req));
     if (Number.isSafeInteger(lastEventId) && lastEventId > 0) {
       for (const missed of this.gateway.bus.missedAlerts(lastEventId)) queue.push(missed);
     }

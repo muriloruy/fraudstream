@@ -33,7 +33,7 @@
 ## 6. Security and verification
 
 - [x] 6.1 Extend `pnpm test:security` with brute-force lockout, refresh reuse and SQL-injection payloads on gateway string inputs (SPEC §13.5); verify green
-- [ ] 6.2 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green; tick every M5 acceptance item in SPEC §17
+- [x] 6.2 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green; tick every M5 acceptance item in SPEC §17
 
 ## Workflow follow-up
 

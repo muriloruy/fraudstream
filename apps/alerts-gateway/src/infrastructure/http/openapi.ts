@@ -2,6 +2,17 @@ import { z } from 'zod';
 import { ReplayBody } from './admin.controller.js';
 import { ListQuery, ResolveBody, SummaryQuery } from './alerts.controller.js';
 import { LoginBody } from './auth.controller.js';
+import {
+  AccountView,
+  AlertDetail,
+  AlertPage,
+  LagResponse,
+  LoginResponse,
+  ReplayResponse,
+  StreamEvents,
+  Summary,
+  Timeline,
+} from './schemas.js';
 
 type Role = 'public' | 'cookie' | 'analyst' | 'admin';
 
@@ -12,10 +23,16 @@ interface Operation {
   role: Role;
   body?: z.ZodType;
   query?: z.ZodObject;
+  /** Schema of the 200 response body. */
+  response?: z.ZodType;
   responses: Record<string, string>;
 }
 
-const json = (schema: z.ZodType) => z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' });
+// OpenAPI 3.1 embeds JSON Schema 2020-12 directly; the per-schema `$schema` key is dropped.
+const json = (schema: z.ZodType, io: 'input' | 'output' = 'input') => {
+  const { $schema: _ignored, ...rest } = z.toJSONSchema(schema, { io, unrepresentable: 'any' });
+  return rest;
+};
 
 const problem = {
   'application/problem+json': { schema: { $ref: '#/components/schemas/Problem' } },
@@ -29,6 +46,7 @@ export const OPERATIONS: readonly Operation[] = [
     summary: 'Email + password → access token + refresh cookie',
     role: 'public',
     body: LoginBody,
+    response: LoginResponse,
     responses: {
       200: 'Logged in',
       400: 'Invalid body',
@@ -42,6 +60,7 @@ export const OPERATIONS: readonly Operation[] = [
     path: '/auth/refresh',
     summary: 'Rotate the refresh token (reuse revokes the family)',
     role: 'cookie',
+    response: LoginResponse,
     responses: { 200: 'New tokens', 401: 'Missing, expired, revoked or reused token' },
   },
   {
@@ -64,6 +83,7 @@ export const OPERATIONS: readonly Operation[] = [
     summary: 'Alert queue, keyset pagination (score desc, created_at, id)',
     role: 'analyst',
     query: ListQuery,
+    response: AlertPage,
     responses: { 200: 'A page and nextCursor', 400: 'Invalid filter or tampered cursor' },
   },
   {
@@ -71,6 +91,7 @@ export const OPERATIONS: readonly Operation[] = [
     path: '/v1/alerts/{id}',
     summary: 'Alert details (audited as ALERT_VIEWED)',
     role: 'analyst',
+    response: AlertDetail,
     responses: { 200: 'Alert with snapshot', 404: 'Unknown alert' },
   },
   {
@@ -78,6 +99,7 @@ export const OPERATIONS: readonly Operation[] = [
     path: '/v1/alerts/{id}/assign',
     summary: 'Assign to self (IN_PROGRESS)',
     role: 'analyst',
+    response: AlertDetail,
     responses: { 200: 'Assigned', 404: 'Unknown alert', 409: 'Already resolved' },
   },
   {
@@ -86,6 +108,7 @@ export const OPERATIONS: readonly Operation[] = [
     summary: 'Resolve with a verdict and a note; publishes analyst feedback',
     role: 'analyst',
     body: ResolveBody,
+    response: AlertDetail,
     responses: {
       200: 'Resolved',
       400: 'Missing note or invalid verdict',
@@ -95,9 +118,18 @@ export const OPERATIONS: readonly Operation[] = [
   },
   {
     method: 'get',
+    path: '/v1/accounts/{accountId}',
+    summary: 'Profile, balance and recent activity',
+    role: 'analyst',
+    response: AccountView,
+    responses: { 200: 'Account view', 400: 'Invalid account id' },
+  },
+  {
+    method: 'get',
     path: '/v1/accounts/{accountId}/timeline',
     summary: 'Last 100 decisions and ledger postings',
     role: 'analyst',
+    response: Timeline,
     responses: { 200: 'Timeline, newest first' },
   },
   {
@@ -106,6 +138,7 @@ export const OPERATIONS: readonly Operation[] = [
     summary: 'tx/s, decision rates, p95 latency over a window',
     role: 'analyst',
     query: SummaryQuery,
+    response: Summary,
     responses: { 200: 'Summary', 400: 'Invalid window' },
   },
   {
@@ -121,6 +154,7 @@ export const OPERATIONS: readonly Operation[] = [
     summary: 'Replay a DLQ offset range (audited)',
     role: 'admin',
     body: ReplayBody,
+    response: ReplayResponse,
     responses: { 200: 'Replay results', 400: 'Invalid range or topic', 403: 'Not an admin' },
   },
   {
@@ -128,6 +162,7 @@ export const OPERATIONS: readonly Operation[] = [
     path: '/admin/consumers/lag',
     summary: 'Consumer lag per group, topic and partition',
     role: 'admin',
+    response: LagResponse,
     responses: { 200: 'Lag rows', 403: 'Not an admin' },
   },
 ];
@@ -171,7 +206,14 @@ export function buildOpenApi(): Record<string, unknown> {
         responses: Object.fromEntries(
           Object.entries(op.responses).map(([status, description]) => [
             status,
-            Number(status) >= 400 ? { description, content: problem } : { description },
+            Number(status) >= 400
+              ? { description, content: problem }
+              : status === '200' && op.response
+                ? {
+                    description,
+                    content: { 'application/json': { schema: json(op.response, 'output') } },
+                  }
+                : { description },
           ]),
         ),
       },
@@ -191,6 +233,12 @@ export function buildOpenApi(): Record<string, unknown> {
         refreshCookie: { type: 'apiKey', in: 'cookie', name: 'fs_refresh' },
       },
       schemas: {
+        ...Object.fromEntries(
+          Object.entries(StreamEvents).map(([type, schema]) => [
+            `StreamEvent_${type.replace('.', '_')}`,
+            json(schema, 'output'),
+          ]),
+        ),
         Problem: {
           type: 'object',
           properties: {

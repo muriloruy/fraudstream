@@ -3,6 +3,7 @@ import {
   FraudDecisionMade,
   FraudRulesEvaluated,
   type AnomalyScoredV1,
+  type DecisionBreakdown,
   type Envelope,
   type FraudDecisionMadeV1,
   type FraudRulesEvaluatedV1,
@@ -38,6 +39,34 @@ const UPSERT_SCORE = `
   ON CONFLICT (transaction_id) DO UPDATE SET anomaly_score = EXCLUDED.anomaly_score
   RETURNING transaction_id, account_id, rule_result, anomaly_score`;
 
+/** The analyst-facing explanation of a decision (rule points, features, weights, thresholds). */
+export function toBreakdown(
+  rules: FraudRulesEvaluatedV1 | null,
+  score: AnomalyScoredV1 | null,
+  outcome: Outcome,
+  cfg: FusionConfig,
+  version: string,
+): DecisionBreakdown {
+  return {
+    firedRules: (rules?.firedRules ?? []).map(({ ruleId, name, points }) => ({
+      ruleId,
+      name,
+      points,
+    })),
+    hardDecline: rules?.hardDecline ?? false,
+    anomaly: score
+      ? {
+          features: score.features,
+          baselineSampleSize: score.baselineSampleSize,
+          modelVersion: score.modelVersion,
+        }
+      : null,
+    weights: outcome.weights,
+    thresholds: { approveBelow: cfg.approveBelow, declineFrom: cfg.declineFrom },
+    configVersion: version,
+  };
+}
+
 /** Builds the published decision; exported for contract tests (SPEC §13.3). */
 export function toDecisionEvent(
   transactionId: string,
@@ -45,6 +74,7 @@ export function toDecisionEvent(
   outcome: Outcome,
   decidedAt: Date,
   requestedAt: string | undefined,
+  breakdown?: DecisionBreakdown,
 ): FraudDecisionMadeV1 {
   return {
     transactionId,
@@ -56,6 +86,7 @@ export function toDecisionEvent(
     partial: outcome.partial,
     decidedAt: decidedAt.toISOString(),
     latencyMs: requestedAt ? Math.max(0, decidedAt.getTime() - Date.parse(requestedAt)) : 0,
+    ...(breakdown ? { breakdown } : {}),
   };
 }
 
@@ -155,6 +186,7 @@ export class Decider {
       outcome,
       decidedAt,
       rules?.requestedAt ?? score?.requestedAt,
+      toBreakdown(rules, score, outcome, this.cfg, this.version),
     );
     await tx.query('DELETE FROM pending WHERE transaction_id = $1', [row.transaction_id]);
     const inserted = await tx.query(

@@ -8,7 +8,8 @@ import type { Principal } from '../../auth/tokens.js';
 import { decodeCursor, encodeCursor, InvalidCursorError } from '../../domain/cursor.js';
 import { parseWindowSeconds } from '../../domain/stats.js';
 import type { Gateway } from '../../gateway.js';
-import { ALERT_STATUSES, OPEN_STATUSES, type Alert } from '../db/alerts.repository.js';
+import { toListItem } from '../../application/alerts.service.js';
+import { ALERT_STATUSES, OPEN_STATUSES } from '../db/alerts.repository.js';
 import { Authorized, CurrentPrincipal, type GatewayRequest } from './auth.guard.js';
 import { GATEWAY } from './tokens.js';
 
@@ -42,8 +43,6 @@ type ResolveBody = z.infer<typeof ResolveBody>;
 
 export const SummaryQuery = z.strictObject({ window: z.string().max(8).default('15m') });
 
-const listItem = ({ snapshot: _snapshot, ...rest }: Alert) => rest;
-
 @Controller()
 @Authorized('analyst')
 export class AlertsController {
@@ -72,7 +71,7 @@ export class AlertsController {
     });
     const last = items.at(-1);
     return {
-      items: items.map(listItem),
+      items: items.map(toListItem),
       nextCursor:
         last && items.length === q.limit
           ? encodeCursor(
@@ -115,6 +114,13 @@ export class AlertsController {
     return this.mapErrors(() =>
       this.gateway.alerts.resolve(id, principal, body.verdict, body.note, this.ipHash(req)),
     );
+  }
+
+  /** Profile, balance and recent activity of an account (SPEC §8.2 Account Timeline). */
+  @Get('v1/accounts/:accountId')
+  async account(@Param('accountId', new ZodValidationPipe(AccountId)) accountId: string) {
+    const view = await this.gateway.alerts.account(accountId);
+    return { accountId, ...view };
   }
 
   /** Last 100 decisions and ledger postings of the account, newest first. */

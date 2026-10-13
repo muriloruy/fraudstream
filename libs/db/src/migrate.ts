@@ -25,7 +25,21 @@ export async function migrate(options: MigrateOptions): Promise<string[]> {
     migrationsTable: 'pgmigrations',
     checkOrder: true,
     singleTransaction: true,
+    // One advisory lock per schema: services own disjoint schemas, so they migrate in parallel
+    // at startup; replicas of the same service wait for each other instead of crashing.
+    lockValue: schemaLockValue(options.schema),
+    advisoryLockMode: 'wait',
     log: options.log ?? (() => undefined),
   });
   return applied.map((m) => m.name);
+}
+
+/** Stable 32-bit advisory lock key for a schema name (FNV-1a). */
+export function schemaLockValue(schema: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < schema.length; i++) {
+    hash ^= schema.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash | 0;
 }

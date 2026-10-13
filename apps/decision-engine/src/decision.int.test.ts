@@ -168,6 +168,11 @@ describe('decision-engine join (SPEC §6.6)', () => {
     expect(event.correlationId).toBe(p.transactionId);
     expect(event.causationId).toBe(p.rules.eventId); // caused by the part that completed the join
     expect(event.payload.latencyMs).toBeGreaterThan(0);
+    expect(event.payload.breakdown).toMatchObject({
+      weights: { rules: 0.6, anomaly: 0.4 },
+      thresholds: { approveBelow: 0.4, declineFrom: 0.75 },
+      configVersion: expect.stringMatching(/^fusion-/) as unknown,
+    });
   });
 
   it('ignores a duplicate part: one decision, one event', async () => {

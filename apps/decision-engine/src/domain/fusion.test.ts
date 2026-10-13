@@ -99,3 +99,20 @@ describe('configVersion', () => {
     expect(configVersion({ ...cfg, declineFrom: 0.8 })).not.toBe(configVersion(cfg));
   });
 });
+
+describe('effective weights (score breakdown)', () => {
+  const cfg = { ...DEFAULT_FUSION, approveBelow: 0.4, declineFrom: 0.75 };
+  const rules = { ruleScore: 0.5, hardDecline: false, firedRules: [] };
+  const score = (n: number) => ({
+    anomalyScore: 0.5,
+    baselineSampleSize: n,
+    features: { amountZ: 0, interArrivalZ: 0, newMerchant: false, hourOfDayDeviation: 0 },
+  });
+
+  it('reports the weights applied to each part', () => {
+    expect(decide(rules, score(50), cfg).weights).toEqual({ rules: 0.6, anomaly: 0.4 });
+    expect(decide(rules, score(3), cfg).weights).toEqual({ rules: 0.85, anomaly: 0.15 });
+    expect(decide(rules, null, cfg).weights).toEqual({ rules: 1, anomaly: 0 });
+    expect(decide(null, score(50), cfg).weights).toEqual({ rules: 0, anomaly: 1 });
+  });
+});

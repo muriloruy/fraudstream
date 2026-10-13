@@ -18,8 +18,9 @@ Real-time payment fraud detection platform: event-driven microservices on **Kafk
 | M2        | Kafka consumer library: idempotency, retry, DLQ, replay | done        |
 | M3        | Fraud rules, anomaly scorer, decision engine            | done        |
 | M4        | Ledger                                                  | done        |
-| M5        | Alerts gateway and auth                                 | in progress |
-| M6–M8     | See SPEC §17                                            | planned     |
+| M5        | Alerts gateway and auth                                 | done        |
+| M6        | Analyst dashboard                                       | in progress |
+| M7–M8     | See SPEC §17                                            | planned     |
 
 ## Architecture
 
@@ -89,7 +90,7 @@ TOKEN=$(curl -s -X POST localhost:3006/auth/login -H 'content-type: application/
 curl -s localhost:3006/v1/alerts -H "authorization: Bearer $TOKEN" | jq
 ```
 
-The OpenAPI document is at <http://localhost:3006/docs>. Upgrading an existing checkout: add `DEMO_ANALYST_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `CORS_ORIGINS` to `.env` (see `.env.example`).
+The OpenAPI document is at <http://localhost:3006/docs>. The analyst console runs at <http://localhost:8081> (see [docs/frontend.md](docs/frontend.md); Figma file pending, design tokens in `apps/web/src/styles/tokens.ts`). Upgrading an existing checkout: add `DEMO_ANALYST_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `CORS_ORIGINS` to `.env` (see `.env.example`).
 
 Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, replication factor 1). Do not run both profiles at once.
 
@@ -103,6 +104,7 @@ Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, repl
 | decision-engine      | <http://localhost:3004> (`/health/ready`, `/metrics`)                               |
 | ledger               | <http://localhost:3005> (`/health/ready`, `/metrics`)                               |
 | alerts-gateway       | <http://localhost:3006> (analyst API, SSE `/v1/stream`, OpenAPI at `/docs`)         |
+| web (dashboard)      | <http://localhost:8081> (analyst console; `pnpm users:seed` creates the logins)     |
 | Kafka (host)         | `localhost:19092`, `localhost:29092`, `localhost:39092`                             |
 | PostgreSQL           | `localhost:5432`, database `fraudstream`, one role per service (see `.env.example`) |
 | kafka-ui             | <http://localhost:8080>                                                             |
