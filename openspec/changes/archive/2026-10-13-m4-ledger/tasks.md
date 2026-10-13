@@ -20,8 +20,8 @@
 
 ## 4. Verification
 
-- [ ] 4.1 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green
-- [ ] 4.2 Tick every M4 acceptance item in SPEC §17
+- [x] 4.1 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green
+- [x] 4.2 Tick every M4 acceptance item in SPEC §17
 
 ## Workflow follow-up
 

@@ -17,8 +17,9 @@ Real-time payment fraud detection platform: event-driven microservices on **Kafk
 | M1        | Ingestion API, card vault, transactional outbox         | done        |
 | M2        | Kafka consumer library: idempotency, retry, DLQ, replay | done        |
 | M3        | Fraud rules, anomaly scorer, decision engine            | done        |
-| M4        | Ledger                                                  | in progress |
-| M5–M8     | See SPEC §17                                            | planned     |
+| M4        | Ledger                                                  | done        |
+| M5        | Alerts gateway and auth                                 | in progress |
+| M6–M8     | See SPEC §17                                            | planned     |
 
 ## Architecture
 
