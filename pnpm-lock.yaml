@@ -555,6 +555,9 @@ importers:
 
   tests/contracts:
     devDependencies:
+      '@fraudstream/alerts-gateway':
+        specifier: workspace:*
+        version: link:../../apps/alerts-gateway
       '@fraudstream/anomaly-scorer':
         specifier: workspace:*
         version: link:../../apps/anomaly-scorer
@@ -597,6 +600,9 @@ importers:
       '@fraudstream/testing':
         specifier: workspace:*
         version: link:../../libs/testing
+      '@node-rs/argon2':
+        specifier: 2.2.2
+        version: 2.2.2
 
 packages:
 

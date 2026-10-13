@@ -19,9 +19,12 @@ RUN pnpm --filter "@fraudstream/${APP}" deploy --prod --legacy /out
 FROM ${NODE_IMAGE}
 ARG APP
 ARG MIGRATIONS=none
-ENV NODE_ENV=production MIGRATIONS_DIR=/app/migrations
+# A second schema owned by the same service (alerts-gateway also owns `auth`, SPEC §5.7).
+ARG EXTRA_MIGRATIONS=none
+ENV NODE_ENV=production MIGRATIONS_DIR=/app/migrations EXTRA_MIGRATIONS_DIR=/app/migrations-extra
 WORKDIR /app
 COPY --from=build --chown=root:root /out ./
 COPY --from=build --chown=root:root /repo/migrations/${MIGRATIONS} ./migrations
+COPY --from=build --chown=root:root /repo/migrations/${EXTRA_MIGRATIONS} ./migrations-extra
 USER node
 CMD ["node", "dist/main.js"]

@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@fraudstream/alerts-gateway": "workspace:*",
     "@fraudstream/anomaly-scorer": "workspace:*",
     "@fraudstream/contracts": "workspace:*",
     "@fraudstream/decision-engine": "workspace:*",

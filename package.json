@@ -29,7 +29,8 @@
     "dlq:replay": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/dlq-replay.ts",
     "test:e2e": "pnpm --filter @fraudstream/e2e-tests test:e2e",
     "test:contracts": "pnpm --filter @fraudstream/contract-tests test",
-    "ledger:reconcile": "pnpm --filter @fraudstream/ledger reconcile"
+    "ledger:reconcile": "pnpm --filter @fraudstream/ledger reconcile",
+    "users:seed": "pnpm --filter @fraudstream/alerts-gateway seed"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

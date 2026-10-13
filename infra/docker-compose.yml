@@ -370,6 +370,33 @@ services:
       retries: 12
       start_period: 15s
 
+  alerts-gateway:
+    <<: *app
+    image: fraudstream/alerts-gateway:dev
+    build:
+      context: ..
+      dockerfile: infra/docker/node-service.Dockerfile
+      args: { APP: alerts-gateway, MIGRATIONS: alerts, EXTRA_MIGRATIONS: auth }
+    ports: ['3006:3006'] # REST, SSE (/v1/stream), /docs, /health, /metrics
+    environment:
+      <<: *app-env
+      PORT: '3006'
+    depends_on:
+      postgres: { condition: service_healthy }
+      init-topics: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3006/health/ready').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
 volumes:
   kafka-1-data:
   kafka-2-data:

@@ -148,6 +148,40 @@ export async function startStack(): Promise<Stack> {
   };
 }
 
+export interface GatewayStack {
+  url: string;
+  alerts: Pool;
+  logs(): string;
+  stop(): Promise<void>;
+}
+
+/**
+ * alerts-gateway from its compiled entry point against the given containers (it migrates the
+ * `auth` and `alerts` schemas itself). Users are created by the caller through `alerts`.
+ */
+export async function startGateway(db: TestPostgres, kafka: TestKafka): Promise<GatewayStack> {
+  const port = await freePort();
+  const gateway = spawnService('alerts-gateway', {
+    KAFKA_BROKERS: kafka.brokers.join(','),
+    MIGRATE_ON_START: 'true',
+    PORT: String(port),
+    DATABASE_URL_ALERTS: db.urlFor('alerts_svc'),
+    JWT_ACCESS_SECRET: randomBytes(32).toString('base64url'),
+    HASH_PEPPER: randomBytes(24).toString('base64url'),
+  });
+  await waitReady(gateway, `http://127.0.0.1:${String(port)}/health/ready`);
+  const alerts = createPool({ connectionString: db.urlFor('alerts_svc'), applicationName: 'test' });
+  return {
+    url: `http://127.0.0.1:${String(port)}`,
+    alerts,
+    logs: () => gateway.output.join(''),
+    async stop() {
+      await stopService(gateway);
+      await alerts.end();
+    },
+  };
+}
+
 /**
  * Finds occurrences of `secret` as a standalone token: not inside a longer run of hex
  * digits or dashes (UUIDs, hashes, timestamps), which would be coincidences, not leaks.

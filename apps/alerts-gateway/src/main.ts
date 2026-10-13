@@ -11,7 +11,7 @@ if (process.env.MIGRATE_ON_START === 'true') {
       databaseUrl: config.databaseUrl,
       schema,
       dir:
-        (schema === 'alerts' ? process.env.MIGRATIONS_DIR : process.env.AUTH_MIGRATIONS_DIR) ??
+        (schema === 'alerts' ? process.env.MIGRATIONS_DIR : process.env.EXTRA_MIGRATIONS_DIR) ??
         fileURLToPath(new URL(`../../../migrations/${schema}`, import.meta.url)),
     });
   }

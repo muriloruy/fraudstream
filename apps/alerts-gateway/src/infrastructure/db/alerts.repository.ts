@@ -194,8 +194,11 @@ export class AlertsRepository {
     if (f.minScore !== undefined) q.add('AND final_score >= ?::numeric', f.minScore);
     if (f.accountId !== undefined) q.add('AND account_id = ?', f.accountId);
     if (f.after) {
+      // `final_score <= s` is implied by the OR below but, unlike it, is an index condition: the
+      // scan starts at the cursor instead of filtering every row before it (docs/perf.md).
       q.add(
-        'AND (final_score < ?::numeric OR (final_score = ?::numeric AND (created_at, alert_id) > (?::timestamptz, ?::uuid)))',
+        'AND final_score <= ?::numeric AND (final_score < ?::numeric OR (final_score = ?::numeric AND (created_at, alert_id) > (?::timestamptz, ?::uuid)))',
+        f.after.finalScore,
         f.after.finalScore,
         f.after.finalScore,
         f.after.createdAt,

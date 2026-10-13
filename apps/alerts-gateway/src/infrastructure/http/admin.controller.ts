@@ -13,7 +13,8 @@ import { GATEWAY } from './tokens.js';
 const DLQ_TOPICS = new Set(
   TOPIC_CATALOGUE.flatMap((t) => t.consumerGroups.map((g) => dlqTopic(t.name, g))),
 );
-const Offset = z.string().regex(/^\d{1,19}$/, 'must be a non-negative integer');
+const OFFSET = /^\d{1,19}$/;
+const Offset = z.string().regex(OFFSET, 'must be a non-negative integer');
 
 export const ReplayBody = z
   .strictObject({
@@ -23,7 +24,11 @@ export const ReplayBody = z
     partition: z.number().int().min(0).max(1000).optional(),
     dryRun: z.boolean().default(false),
   })
-  .refine((b) => BigInt(b.from) <= BigInt(b.to), { message: 'from must be <= to', path: ['to'] });
+  // Zod runs this refinement even when a field failed: guard before BigInt() (it throws).
+  .refine((b) => !OFFSET.test(b.from) || !OFFSET.test(b.to) || BigInt(b.from) <= BigInt(b.to), {
+    message: 'from must be <= to',
+    path: ['to'],
+  });
 type ReplayBody = z.infer<typeof ReplayBody>;
 
 export interface LagRow {
