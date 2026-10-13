@@ -3,6 +3,7 @@ import {
   createEnvelope,
   FraudDecisionMade,
   FraudRulesEvaluated,
+  LedgerEntriesPosted,
   TransactionAuthorizationRequested,
   uuidv7,
   type Envelope,
@@ -12,6 +13,7 @@ import { decodeEvent, type EventDefinition } from '@fraudstream/kafka';
 import * as scorer from '@fraudstream/anomaly-scorer/contract';
 import * as decision from '@fraudstream/decision-engine/contract';
 import * as rules from '@fraudstream/fraud-rules/contract';
+import * as ledger from '@fraudstream/ledger/contract';
 import * as api from '@fraudstream/transaction-api/contract';
 import { describe, expect, it } from 'vitest';
 
@@ -43,6 +45,7 @@ const CONSUMES = {
   'anomaly-scorer': [TransactionAuthorizationRequested],
   'decision-engine': [FraudRulesEvaluated, AnomalyScored],
   'transaction-api': [FraudDecisionMade],
+  'alerts-gateway': [LedgerEntriesPosted], // consumer arrives in M5; the schema is the contract
 } as const satisfies Record<string, readonly EventDefinition[]>;
 
 const PEPPER = 'contract-test-pepper-of-sufficient-length';
@@ -216,5 +219,27 @@ describe('fraud.decisions.v1 (decision-engine → transaction-api)', () => {
         }
       }
     }
+  });
+});
+
+describe('ledger.entries.v1 (ledger → alerts-gateway)', () => {
+  it.each(['0.01', '1250.9', '1000000.00'])('a journal of %s is accepted', (amount) => {
+    const tx = {
+      transactionId: uuidv7(),
+      accountId: 'acc_contract',
+      merchantId: 'mer-1',
+      amount,
+      currency: 'BRL',
+    };
+    const event = ledger.toPostedEvent(tx, {
+      journalId: uuidv7(),
+      entries: ledger.buildJournal(tx),
+      postedAt: new Date(),
+    });
+    const decoded = consume(
+      onTheWire(ledger.PRODUCER, LedgerEntriesPosted, event),
+      CONSUMES['alerts-gateway'],
+    );
+    expect(decoded.payload).toEqual(event);
   });
 });

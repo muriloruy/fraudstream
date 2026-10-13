@@ -16,8 +16,9 @@ Real-time payment fraud detection platform: event-driven microservices on **Kafk
 | M0        | Monorepo, local Kafka + Postgres, event contracts, CI   | done        |
 | M1        | Ingestion API, card vault, transactional outbox         | done        |
 | M2        | Kafka consumer library: idempotency, retry, DLQ, replay | done        |
-| M3        | Fraud rules, anomaly scorer, decision engine            | in progress |
-| M4–M8     | See SPEC §17                                            | planned     |
+| M3        | Fraud rules, anomaly scorer, decision engine            | done        |
+| M4        | Ledger                                                  | in progress |
+| M5–M8     | See SPEC §17                                            | planned     |
 
 ## Architecture
 
@@ -72,7 +73,11 @@ curl -i -X POST localhost:3000/v1/transactions \
 # 202 {"transactionId":"…","status":"PENDING","links":{"self":"/v1/transactions/…"}}
 ```
 
-The event appears on `payments.transactions.v1` in kafka-ui, keyed by `accountId`, with the vault token and the masked PAN only.
+The event appears on `payments.transactions.v1` in kafka-ui, keyed by `accountId`, with the vault token and the masked PAN only. Within a few hundred milliseconds `GET /v1/transactions/:id` shows the decision (`APPROVED`, `REVIEW` or `DECLINED`, ADR-005), and an approval is posted to the ledger as a balanced journal on `ledger.entries.v1`.
+
+```bash
+pnpm ledger:reconcile    # read-only reconciliation report (docs/sql/reconciliation.sql); exit 1 when dirty
+```
 
 Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, replication factor 1). Do not run both profiles at once.
 
@@ -81,6 +86,10 @@ Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, repl
 | transaction-api      | <http://localhost:3000> (`/v1/transactions`, `/health/ready`)                       |
 | card-vault           | internal only (no published port)                                                   |
 | outbox-relay metrics | <http://localhost:9464/metrics>                                                     |
+| fraud-rules          | <http://localhost:3002> (`/health/ready`, `/metrics`)                               |
+| anomaly-scorer       | <http://localhost:3003> (`/health/ready`, `/metrics`)                               |
+| decision-engine      | <http://localhost:3004> (`/health/ready`, `/metrics`)                               |
+| ledger               | <http://localhost:3005> (`/health/ready`, `/metrics`)                               |
 | Kafka (host)         | `localhost:19092`, `localhost:29092`, `localhost:39092`                             |
 | PostgreSQL           | `localhost:5432`, database `fraudstream`, one role per service (see `.env.example`) |
 | kafka-ui             | <http://localhost:8080>                                                             |
@@ -93,10 +102,20 @@ pnpm typecheck     # tsc --noEmit, strict mode
 pnpm test          # Vitest unit tests (pnpm test:coverage for coverage)
 pnpm test:integration  # Testcontainers PostgreSQL + Kafka (needs Docker)
 pnpm test:security     # PAN/CVV leak test and SQL injection payloads against the real services
+pnpm test:contracts    # producer fixtures validated against consumer schemas, per topic
+pnpm test:e2e          # end-to-end against the running compose stack (card testing burst → DECLINED)
 pnpm db:migrate        # apply migrations/<service> as each service's own role (services also do it at start)
 pnpm format        # Prettier
 pnpm topics:generate   # regenerate infra/kafka/topics.conf after editing libs/contracts/src/topics.ts
 ```
+
+### Ledger (SPEC §5.6, §6.7)
+
+- Approvals become one journal (customer `DEBIT`, merchant `CREDIT`); `REVIEW` and `DECLINE` move no money.
+- `FraudDecisionMade` carries no amount or merchant (SPEC §4.9), so the ledger keeps a projection of `payments.transactions.v1` and joins it with the decision; a decision that arrives first is retried until the transaction is projected. Adding the fields to the decision event was rejected to keep its payload as specified.
+- The database enforces the invariants: a deferred constraint trigger rejects unbalanced journals at commit, `ledger_svc` cannot update, delete or truncate entries (journals are protected by a trigger, since the foreign key check needs `UPDATE` on them), and `journals.transaction_id` is unique.
+- Balances use optimistic locking (`version`), retried on conflict.
+- Reconciliation runs as the read-only `reconciler` role. Upgrading an existing checkout: add `DATABASE_URL_RECONCILER` to `.env` (see `.env.example`) and recreate the Postgres volume (`docker compose --profile core down -v`), since roles are created on first start only.
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org); Husky runs Prettier + ESLint on staged files and commitlint on the message.
 

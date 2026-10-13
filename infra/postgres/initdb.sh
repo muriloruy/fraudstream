@@ -16,7 +16,7 @@ password_from_url() {
 }
 
 args=()
-for service in PAYMENTS VAULT FRAUD_RULES ANOMALY DECISION LEDGER ALERTS; do
+for service in PAYMENTS VAULT FRAUD_RULES ANOMALY DECISION LEDGER ALERTS RECONCILER; do
   args+=(-v "${service,,}_password=$(password_from_url "$service")")
 done
 

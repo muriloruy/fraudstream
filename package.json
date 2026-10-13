@@ -28,7 +28,8 @@
     "migrations:add-inbox": "tsx --tsconfig tsconfig.runtime.json scripts/add-inbox-migration.ts",
     "dlq:replay": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/dlq-replay.ts",
     "test:e2e": "pnpm --filter @fraudstream/e2e-tests test:e2e",
-    "test:contracts": "pnpm --filter @fraudstream/contract-tests test"
+    "test:contracts": "pnpm --filter @fraudstream/contract-tests test",
+    "ledger:reconcile": "pnpm --filter @fraudstream/ledger reconcile"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",

@@ -52,7 +52,12 @@ export const TOPIC_CATALOGUE: readonly SourceTopicSpec[] = [
     partitions: FRAUD_FLOW_PARTITIONS,
     cleanupPolicy: 'delete',
     retentionMs: 7 * DAY_MS,
-    consumerGroups: [ConsumerGroups.fraudRules, ConsumerGroups.anomalyScorer],
+    // ledger keeps a projection (amount, merchant): FraudDecisionMade carries neither (SPEC §6.7).
+    consumerGroups: [
+      ConsumerGroups.fraudRules,
+      ConsumerGroups.anomalyScorer,
+      ConsumerGroups.ledger,
+    ],
   },
   {
     name: Topics.accountProfiles,
