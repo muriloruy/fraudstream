@@ -31,7 +31,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@v5
       - name: Prettier
         run: pnpm format:check
       - name: Lint and typecheck (affected projects on PRs, all on main)
@@ -59,7 +59,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@v5
       - name: Unit tests with coverage (affected projects on PRs, all on main)
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
