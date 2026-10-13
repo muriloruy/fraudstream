@@ -17,8 +17,9 @@ Real-time payment fraud detection platform: event-driven microservices on **Kafk
 | M1        | Ingestion API, card vault, transactional outbox         | done        |
 | M2        | Kafka consumer library: idempotency, retry, DLQ, replay | done        |
 | M3        | Fraud rules, anomaly scorer, decision engine            | done        |
-| M4        | Ledger                                                  | in progress |
-| M5–M8     | See SPEC §17                                            | planned     |
+| M4        | Ledger                                                  | done        |
+| M5        | Alerts gateway and auth                                 | in progress |
+| M6–M8     | See SPEC §17                                            | planned     |
 
 ## Architecture
 
@@ -79,6 +80,17 @@ The event appears on `payments.transactions.v1` in kafka-ui, keyed by `accountId
 pnpm ledger:reconcile    # read-only reconciliation report (docs/sql/reconciliation.sql); exit 1 when dirty
 ```
 
+REVIEW and DECLINE decisions become alerts in the analyst API (alerts-gateway, SPEC §6.8):
+
+```bash
+pnpm users:seed          # analyst@demo.local / admin@demo.local, passwords from .env (DEMO_*_PASSWORD)
+TOKEN=$(curl -s -X POST localhost:3006/auth/login -H 'content-type: application/json' \
+  -d "{\"email\":\"analyst@demo.local\",\"password\":\"$DEMO_ANALYST_PASSWORD\"}" | jq -r .accessToken)
+curl -s localhost:3006/v1/alerts -H "authorization: Bearer $TOKEN" | jq
+```
+
+The OpenAPI document is at <http://localhost:3006/docs>. Upgrading an existing checkout: add `DEMO_ANALYST_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `CORS_ORIGINS` to `.env` (see `.env.example`).
+
 Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, replication factor 1). Do not run both profiles at once.
 
 | Service              | Address                                                                             |
@@ -90,6 +102,7 @@ Low on RAM? Use `--profile lowmem` instead of `--profile core` (one broker, repl
 | anomaly-scorer       | <http://localhost:3003> (`/health/ready`, `/metrics`)                               |
 | decision-engine      | <http://localhost:3004> (`/health/ready`, `/metrics`)                               |
 | ledger               | <http://localhost:3005> (`/health/ready`, `/metrics`)                               |
+| alerts-gateway       | <http://localhost:3006> (analyst API, SSE `/v1/stream`, OpenAPI at `/docs`)         |
 | Kafka (host)         | `localhost:19092`, `localhost:29092`, `localhost:39092`                             |
 | PostgreSQL           | `localhost:5432`, database `fraudstream`, one role per service (see `.env.example`) |
 | kafka-ui             | <http://localhost:8080>                                                             |

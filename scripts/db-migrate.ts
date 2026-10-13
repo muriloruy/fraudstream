@@ -21,6 +21,7 @@ const SERVICES: Record<string, ServiceDb> = {
   decision: { schema: 'decision', urlEnv: 'DATABASE_URL_DECISION' },
   ledger: { schema: 'ledger', urlEnv: 'DATABASE_URL_LEDGER' },
   alerts: { schema: 'alerts', urlEnv: 'DATABASE_URL_ALERTS' },
+  auth: { schema: 'auth', urlEnv: 'DATABASE_URL_ALERTS' }, // also owned by alerts_svc (SPEC §5.7)
 };
 
 const root = fileURLToPath(new URL('../', import.meta.url));

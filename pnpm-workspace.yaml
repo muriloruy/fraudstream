@@ -12,4 +12,6 @@ onlyBuiltDependencies:
 ignoredBuiltDependencies:
   - cpu-features
   - ssh2
+  # Install-time telemetry of swagger-ui-dist (via @nestjs/swagger); never run it.
+  - '@scarf/scarf'
   - protobufjs

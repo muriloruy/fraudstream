@@ -216,6 +216,33 @@ describe('ConsumerRuntime', () => {
     expect((await effectsFor([e.eventId])).get(e.eventId)).toBe(1);
   });
 
+  it('runs afterCommit hooks once, only for the attempt that committed', async () => {
+    const group = 'g-after-commit';
+    const topic = await freshTopic(group);
+    const e = event('acc_hook', 7);
+    await publish(topic, [e, e]); // the duplicate must not fire the hook again
+    const fired: string[] = [];
+    let attempts = 0;
+    const r = runtime(topic, group, undefined, {
+      handlers: [
+        on(testEvent(topic), async (ev, ctx) => {
+          attempts++;
+          ctx.afterCommit(() => fired.push(`${ev.eventId}#${String(attempts)}`));
+          await ctx.tx.query('INSERT INTO effects (event_id, key, n) VALUES ($1, $2, $3)', [
+            ev.eventId,
+            ev.payload.key,
+            ev.payload.n,
+          ]);
+          if (attempts === 1) throw new TransientError('rolled back: hook must not run');
+        }),
+      ],
+    });
+    await r.start();
+    await waitFor(() => fullyCommitted(r, topic));
+    expect(fired).toEqual([`${e.eventId}#2`]);
+    expect((await effectsFor([e.eventId])).get(e.eventId)).toBe(1);
+  });
+
   it('sends an invalid payload straight to the DLQ and keeps the partition flowing', async () => {
     const group = 'g-dlq';
     const topic = await freshTopic(group, 1);

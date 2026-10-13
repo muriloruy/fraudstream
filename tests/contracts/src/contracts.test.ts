@@ -1,4 +1,5 @@
 import {
+  AnalystFeedbackRecorded,
   AnomalyScored,
   createEnvelope,
   FraudDecisionMade,
@@ -10,6 +11,7 @@ import {
   type TransactionAuthorizationRequestedV1,
 } from '@fraudstream/contracts';
 import { decodeEvent, type EventDefinition } from '@fraudstream/kafka';
+import * as gateway from '@fraudstream/alerts-gateway/contract';
 import * as scorer from '@fraudstream/anomaly-scorer/contract';
 import * as decision from '@fraudstream/decision-engine/contract';
 import * as rules from '@fraudstream/fraud-rules/contract';
@@ -45,7 +47,8 @@ const CONSUMES = {
   'anomaly-scorer': [TransactionAuthorizationRequested],
   'decision-engine': [FraudRulesEvaluated, AnomalyScored],
   'transaction-api': [FraudDecisionMade],
-  'alerts-gateway': [LedgerEntriesPosted], // consumer arrives in M5; the schema is the contract
+  'alerts-gateway': [FraudDecisionMade, LedgerEntriesPosted],
+  'anomaly-scorer (feedback)': [AnalystFeedbackRecorded],
 } as const satisfies Record<string, readonly EventDefinition[]>;
 
 const PEPPER = 'contract-test-pepper-of-sufficient-length';
@@ -239,6 +242,28 @@ describe('ledger.entries.v1 (ledger → alerts-gateway)', () => {
     const decoded = consume(
       onTheWire(ledger.PRODUCER, LedgerEntriesPosted, event),
       CONSUMES['alerts-gateway'],
+    );
+    expect(decoded.payload).toEqual(event);
+  });
+});
+
+describe('fraud.analyst-feedback.v1 (alerts-gateway → anomaly-scorer)', () => {
+  it.each(['CONFIRMED_FRAUD', 'LEGITIMATE'] as const)('a %s resolution is accepted', (verdict) => {
+    const alert = {
+      alertId: crypto.randomUUID(),
+      transactionId: uuidv7(),
+      accountId: 'acc_contract',
+    };
+    const event = gateway.toFeedbackEvent(
+      alert,
+      verdict,
+      crypto.randomUUID(),
+      'x'.repeat(2000),
+      new Date(),
+    );
+    const decoded = consume(
+      onTheWire(gateway.PRODUCER, AnalystFeedbackRecorded, event),
+      CONSUMES['anomaly-scorer (feedback)'],
     );
     expect(decoded.payload).toEqual(event);
   });
