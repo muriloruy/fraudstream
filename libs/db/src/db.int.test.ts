@@ -1,7 +1,14 @@
 import { fileURLToPath } from 'node:url';
 import { startPostgres, type TestPostgres } from '@fraudstream/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createPool, databaseIsReachable, migrate, withTransaction, type Pool } from './index.js';
+import {
+  createPool,
+  databaseIsReachable,
+  migrate,
+  schemaLockValue,
+  withTransaction,
+  type Pool,
+} from './index.js';
 
 let db: TestPostgres;
 let pool: Pool;
@@ -35,6 +42,28 @@ describe('migrate', () => {
       "SELECT to_regclass('payments.widgets')::text AS t",
     );
     expect(rows[0]?.t).toBe('widgets');
+  });
+
+  it('waits for a concurrent migration of the same schema instead of failing', async () => {
+    const holder = await pool.connect();
+    try {
+      await holder.query('SELECT pg_advisory_lock($1)', [schemaLockValue('payments')]);
+      let finished = false;
+      const pending = migrate({
+        databaseUrl: db.urlFor('payments_svc'),
+        schema: 'payments',
+        dir: fileURLToPath(new URL('./__fixtures__/migrations', import.meta.url)),
+      }).then((applied) => {
+        finished = true;
+        return applied;
+      });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(finished).toBe(false);
+      await holder.query('SELECT pg_advisory_unlock($1)', [schemaLockValue('payments')]);
+      await expect(pending).resolves.toEqual([]);
+    } finally {
+      holder.release();
+    }
   });
 });
 

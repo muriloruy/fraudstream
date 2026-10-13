@@ -4,19 +4,24 @@
 ARG NODE_IMAGE=node:22-bookworm-slim
 
 FROM ${NODE_IMAGE} AS build
-ARG APP
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
 WORKDIR /repo
 COPY . .
+# The install step must not depend on APP: every service then shares one cached install layer
+# (BuildKit runs it once even when compose builds all images in parallel) instead of downloading
+# the whole workspace once per service. The store cache mount keeps tarballs across rebuilds.
 # Behind a TLS-intercepting proxy, pass its CA as a build secret (not stored in any layer):
 #   docker build --secret id=extra_ca,src=/path/ca.crt --build-arg HTTPS_PROXY=... ...
 RUN --mount=type=secret,id=extra_ca,required=false \
+    --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     if [ -f /run/secrets/extra_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/extra_ca; fi; \
-    corepack enable && pnpm install --frozen-lockfile
+    corepack enable && pnpm config set store-dir /pnpm/store && pnpm install --frozen-lockfile
+ARG APP
 RUN pnpm --filter "@fraudstream/${APP}..." run build
 # deploy re-runs install scripts (the Kafka client's prebuilt binary download), so it needs the
 # same optional CA as the install step.
 RUN --mount=type=secret,id=extra_ca,required=false \
+    --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     if [ -f /run/secrets/extra_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/extra_ca; fi; \
     pnpm --filter "@fraudstream/${APP}" deploy --prod --legacy /out
 
