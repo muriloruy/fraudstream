@@ -11,7 +11,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e:web": "playwright test"
+    "test:e2e:web": "playwright test",
+    "lighthouse": "tsx e2e/lighthouse.ts",
+    "screenshots": "tsx e2e/screenshots.ts",
+    "tokens:export": "tsx scripts/export-tokens.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
@@ -44,7 +47,10 @@
     "@vitejs/plugin-react": "6.1.2",
     "axe-core": "4.14.0",
     "jsdom": "30.1.2",
+    "lighthouse": "12.6.1",
+    "pg": "8.23.1",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
     "vite": "8.3.4"
   }
 }

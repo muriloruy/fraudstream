@@ -10,6 +10,9 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   {
     ignores: [
+      '**/playwright-report/**',
+      '**/test-results/**',
+      '**/.lighthouseci/**',
       '**/dist/**',
       '**/coverage/**',
       '**/node_modules/**',
@@ -88,8 +91,12 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/web/**/*.test.{ts,tsx}', 'apps/web/e2e/**/*.ts'],
-    rules: { 'security/detect-object-injection': 'off' },
+    files: ['apps/web/**/*.test.{ts,tsx}', 'apps/web/e2e/**/*.ts', 'apps/web/scripts/**/*.ts'],
+    rules: {
+      'security/detect-object-injection': 'off',
+      // e2e scripts read and write fixed paths inside the repository.
+      'security/detect-non-literal-fs-filename': 'off',
+    },
   },
   {
     files: ['**/*.js'],

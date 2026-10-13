@@ -14,7 +14,11 @@ RUN --mount=type=secret,id=extra_ca,required=false \
     if [ -f /run/secrets/extra_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/extra_ca; fi; \
     corepack enable && pnpm install --frozen-lockfile
 RUN pnpm --filter "@fraudstream/${APP}..." run build
-RUN pnpm --filter "@fraudstream/${APP}" deploy --prod --legacy /out
+# deploy re-runs install scripts (the Kafka client's prebuilt binary download), so it needs the
+# same optional CA as the install step.
+RUN --mount=type=secret,id=extra_ca,required=false \
+    if [ -f /run/secrets/extra_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/extra_ca; fi; \
+    pnpm --filter "@fraudstream/${APP}" deploy --prod --legacy /out
 
 FROM ${NODE_IMAGE}
 ARG APP

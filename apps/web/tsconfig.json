@@ -12,5 +12,5 @@
     "experimentalDecorators": false,
     "emitDecoratorMetadata": false
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "e2e/**/*.ts", "*.config.ts"]
+  "include": ["*.config.ts", "e2e/**/*.ts", "scripts/**/*.ts", "src/**/*.ts", "src/**/*.tsx"]
 }

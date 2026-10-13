@@ -15,10 +15,13 @@ export function MiniTimeline({
     .filter((i) => i.kind === 'DECISION' && i.amount)
     .slice(0, 20)
     .reverse();
+  // Display only: Number() is fine for a bar height, never for money arithmetic (ADR-009).
   const data = decisions.map((i) => ({
     id: i.transactionId,
     at: i.occurredAt,
     amount: Number(i.amount?.value ?? 0),
+    fill:
+      i.transactionId === current ? 'rgb(var(--color-decline))' : 'rgb(var(--color-primary) / 0.5)',
   }));
   return (
     <Card>
@@ -42,6 +45,7 @@ export function MiniTimeline({
                 typeof label === 'string' ? formatTime(label) : ''
               }
             />
+            {/* Recharts takes each bar's color from its `fill` in the data: the alert's transaction stands out. */}
             <Bar dataKey="amount" isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>

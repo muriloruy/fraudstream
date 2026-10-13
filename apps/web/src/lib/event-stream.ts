@@ -65,9 +65,12 @@ const EVENT_TYPES = ['alert.created', 'alert.updated', 'decision.made', 'metrics
  * On error (network, or the server closing an expired session) it gets a new session cookie
  * and reconnects with backoff; EventSource resends Last-Event-ID to resume missed alerts.
  */
+/** Module-level, so it is the same function on every render (it is an effect dependency). */
+const browserSource = (url: string) => new EventSource(url, { withCredentials: true });
+
 export function useEventStream(
   enabled: boolean,
-  makeSource = (url: string) => new EventSource(url, { withCredentials: true }),
+  makeSource: (url: string) => EventSource = browserSource,
 ): StreamStatus {
   const client = useQueryClient();
   const [status, setStatus] = useState<StreamStatus>('connecting');

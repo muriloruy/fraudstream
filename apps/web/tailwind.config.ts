@@ -3,8 +3,9 @@ import plugin from 'tailwindcss/plugin';
 import { colors, cssVariables, fontFamily, fontSize, radius, spacing } from './src/styles/tokens';
 
 /**
- * Maps the design tokens (src/styles/tokens.ts) onto Tailwind. Colors resolve through CSS
- * variables defined per theme below, so `dark` only swaps variable values.
+ * Maps the design tokens (src/styles/tokens.ts) onto Tailwind. Colors are token-only and
+ * resolve through CSS variables defined per theme below, so `dark` only swaps variable values;
+ * spacing, type and radius tokens extend Tailwind's scales.
  */
 const config: Config = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -19,12 +20,15 @@ const config: Config = {
         ]),
       ),
     },
-    spacing,
-    fontSize: Object.fromEntries(
-      Object.entries(fontSize).map(([k, [size, lineHeight]]) => [k, [size, { lineHeight }]]),
-    ),
-    borderRadius: radius,
     fontFamily: Object.fromEntries(Object.entries(fontFamily).map(([k, v]) => [k, [...v]])),
+    // Tokens override the matching steps but keep Tailwind's other sizes (h-64, w-80, ...).
+    extend: {
+      spacing,
+      fontSize: Object.fromEntries(
+        Object.entries(fontSize).map(([k, [size, lineHeight]]) => [k, [size, { lineHeight }]]),
+      ),
+      borderRadius: radius,
+    },
   },
   plugins: [
     plugin((api) => {

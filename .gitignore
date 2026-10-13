@@ -20,3 +20,9 @@ simulator_output/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Playwright and Lighthouse outputs
+playwright-report/
+test-results/
+.lighthouseci/
+apps/web/lighthouse/
