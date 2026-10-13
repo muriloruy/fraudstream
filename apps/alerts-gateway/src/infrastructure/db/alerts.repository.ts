@@ -83,11 +83,13 @@ export class AlertsRepository {
   // ---- projections (consumer side) ----------------------------------------------------------
 
   async rememberTransaction(db: Db, p: TransactionAuthorizationRequestedV1): Promise<void> {
-    // Masked PAN only: the token, device and IP hashes are not needed by analysts.
+    // Masked PAN only, no vault token. The peppered device id hash identifies a device across
+    // alerts (SPEC §8.2 Alert Detail); the IP hash is not needed by analysts and is left out.
     const details = {
       amount: p.amount,
       merchant: p.merchant,
       maskedPan: p.maskedPan,
+      deviceIdHash: p.device.deviceIdHash,
       channel: p.channel,
       entryMode: p.entryMode,
       ...(p.geo ? { geo: p.geo } : {}),

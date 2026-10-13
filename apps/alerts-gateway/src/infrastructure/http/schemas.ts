@@ -68,6 +68,7 @@ export const AlertSnapshot = z.object({
       city: z.string().optional(),
     }),
     maskedPan: MaskedPan,
+    deviceIdHash: z.string().optional(),
     channel: z.string(),
     entryMode: z.string(),
     geo: z.object({ lat: z.number(), lon: z.number() }).optional(),
@@ -162,16 +163,7 @@ export const ReplayResponse = z.object({
 });
 
 /** Event payloads of `GET /v1/stream` (documented in the OpenAPI components). */
-export const StreamAlert = AlertBase.pick({
-  alertId: true,
-  transactionId: true,
-  accountId: true,
-  decision: true,
-  finalScore: true,
-  status: true,
-  assignedTo: true,
-  createdAt: true,
-});
+export const StreamAlert = AlertListItem;
 export const StreamEvents = {
   'alert.created': StreamAlert,
   'alert.updated': StreamAlert,

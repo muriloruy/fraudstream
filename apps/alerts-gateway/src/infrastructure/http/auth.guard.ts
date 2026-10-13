@@ -16,6 +16,7 @@ import { TOKENS } from './tokens.js';
 export interface GatewayRequest {
   headers: Record<string, string | string[] | undefined>;
   cookies?: Record<string, string | undefined>;
+  query?: Record<string, unknown>;
   ip?: string;
   principal?: Principal;
 }

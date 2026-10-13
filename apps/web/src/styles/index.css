@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+@config '../../tailwind.config.ts';
+
+/* Dark mode by class on <html> (SPEC §8.3), toggled and persisted by src/lib/theme.ts. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  /* Visible focus for keyboard users on every interactive element (SPEC §8.3). */
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-focus));
+    outline-offset: 2px;
+  }
+}
+
+@keyframes highlight-fade {
+  from {
+    background-color: rgb(var(--color-highlight));
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.animate-highlight {
+  animation: highlight-fade 3s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-highlight {
+    animation: none;
+  }
+}

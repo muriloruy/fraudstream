@@ -552,7 +552,7 @@ interface SseEvent {
 }
 
 /** Opens the stream and collects parsed events until `close()`. */
-function openStream(cookie: string | undefined, lastEventId?: number) {
+function openStream(cookie: string | undefined, lastEventId?: number, viaQuery = false) {
   const events: SseEvent[] = [];
   let response: IncomingMessage | undefined;
   const url = new URL('/v1/stream', base);
@@ -561,10 +561,13 @@ function openStream(cookie: string | undefined, lastEventId?: number) {
       {
         host: url.hostname,
         port: url.port,
-        path: url.pathname,
+        path:
+          viaQuery && lastEventId
+            ? `${url.pathname}?lastEventId=${String(lastEventId)}`
+            : url.pathname,
         headers: {
           ...(cookie ? { cookie: `fs_stream=${cookie}` } : {}),
-          ...(lastEventId ? { 'last-event-id': String(lastEventId) } : {}),
+          ...(lastEventId && !viaQuery ? { 'last-event-id': String(lastEventId) } : {}),
         },
       },
       (res) => {
@@ -645,6 +648,13 @@ describe('SSE stream (SPEC §6.8, ADR-006)', () => {
     for (const id of missed)
       await second.waitFor((e) => e.event === 'alert.created' && e.data.alertId === id);
     second.close();
+
+    // a brand-new EventSource cannot send the header: the same resume via ?lastEventId=
+    const third = openStream(cookie, tick.id, true);
+    expect(await third.ready).toBe(200);
+    for (const id of missed)
+      await third.waitFor((e) => e.event === 'alert.created' && e.data.alertId === id);
+    third.close();
   });
 });
 

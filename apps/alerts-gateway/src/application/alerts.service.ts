@@ -49,17 +49,27 @@ export function toFeedbackEvent(
   };
 }
 
-/** What the stream shows of an alert: no snapshot (the client fetches details over REST). */
-const streamView = (a: Alert) => ({
-  alertId: a.alertId,
-  transactionId: a.transactionId,
-  accountId: a.accountId,
-  decision: a.decision,
-  finalScore: a.finalScore,
-  status: a.status,
-  assignedTo: a.assignedTo,
-  createdAt: a.createdAt,
-});
+interface SnapshotShape {
+  transaction?: { amount?: unknown; merchant?: { name?: unknown; country?: unknown } };
+  decision?: { breakdown?: { firedRules?: { ruleId: string; name: string }[] } | null };
+}
+
+/** Queue row: the alert without its snapshot, plus the columns the table shows (SPEC §8.2). */
+export const toListItem = ({ snapshot, ...rest }: Alert) => {
+  const s = snapshot as SnapshotShape;
+  return {
+    ...rest,
+    amount: s.transaction?.amount ?? null,
+    merchantName:
+      typeof s.transaction?.merchant?.name === 'string' ? s.transaction.merchant.name : null,
+    country:
+      typeof s.transaction?.merchant?.country === 'string' ? s.transaction.merchant.country : null,
+    firedRules: (s.decision?.breakdown?.firedRules ?? []).map((r) => r.ruleId),
+  };
+};
+
+/** Stream events carry the same row the queue shows, so a live insert is complete. */
+const streamView = toListItem;
 
 export class AlertsService {
   constructor(
