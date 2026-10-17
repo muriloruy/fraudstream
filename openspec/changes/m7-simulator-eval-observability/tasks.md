@@ -15,12 +15,12 @@
 
 ## 3. Observability (SPEC §10)
 
-- [ ] 3.1 Add OTel SDK bootstrap to `libs/observability` and import it first in every service; wire Kafka produce/consume spans with header propagation; integration test asserts one trace id across API → decision
+- [x] 3.1 Add OTel SDK bootstrap to `libs/observability` and import it first in every service; wire Kafka produce/consume spans with header propagation; integration test asserts one trace id across API → decision
 - [ ] 3.2 Complete `/metrics` per service with SPEC §10 metrics; verify via Prometheus targets page all services are UP
 - [ ] 3.3 `infra/docker-compose.observability.yml` (Jaeger, Prometheus, Grafana, kafka-exporter) with `observability` profile; verify services start and Jaeger shows a full trace
 - [ ] 3.4 Provision Grafana datasources and 4 dashboards (`infra/grafana/dashboards/*.json`); verify they load on startup
 - [ ] 3.5 Prometheus alert rules (lag, DLQ, outbox age, p95 latency); verify the DLQ rule fires after sending a poison message
-- [ ] 3.6 Add `traceId`/`transactionId` to pino logs via OTel context; unit test of log mixin
+- [x] 3.6 Add `traceId`/`transactionId` to pino logs via OTel context; unit test of log mixin
 - [ ] 3.7 Document observability in `docs/runbook.md` (where to look for lag, DLQ, slow decisions); verify links/ports are correct
 
 ## 4. Verification

@@ -1,9 +1,5 @@
 import 'reflect-metadata';
 import {
-  Controller,
-  Get,
-  Header,
-  Inject,
   Module,
   type DynamicModule,
   type ModuleMetadata,
@@ -15,6 +11,9 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createPool, databaseIsReachable, type Pool, type PoolClient } from '@fraudstream/db';
 import {
   HealthController,
+  httpMetrics,
+  METRICS_REGISTRY,
+  MetricsController,
   ProblemDetailsFilter,
   READINESS_CHECKS,
   type ReadinessCheck,
@@ -87,17 +86,6 @@ export interface ConsumerServiceOptions {
 export const SERVICE_DEPS = Symbol('SERVICE_DEPS');
 const DEPS = SERVICE_DEPS;
 const OPTIONS = Symbol('SERVICE_OPTIONS');
-
-@Controller('metrics')
-class MetricsController {
-  constructor(@Inject(DEPS) private readonly deps: ServiceDeps) {}
-
-  @Get()
-  @Header('Content-Type', 'text/plain; version=0.0.4')
-  metrics(): Promise<string> {
-    return this.deps.registry.metrics();
-  }
-}
 
 /**
  * Starts, in order: producer, embedded outbox relay, jobs, consumers. Stops in reverse, so the
@@ -207,6 +195,7 @@ class ConsumerServiceModule {
             };
           },
         },
+        { provide: METRICS_REGISTRY, inject: [DEPS], useFactory: (d: ServiceDeps) => d.registry },
         {
           provide: SERVICE_LIFECYCLE,
           inject: [DEPS, OPTIONS],
@@ -239,6 +228,7 @@ export async function createConsumerService(
   const logger = app.get(NestPinoLogger);
   app.useLogger(logger);
   app.disable('x-powered-by');
+  app.use(httpMetrics(app.get<ServiceDeps>(DEPS).registry));
   app.useGlobalFilters(new ProblemDetailsFilter(logger));
   app.enableShutdownHooks();
   return app;

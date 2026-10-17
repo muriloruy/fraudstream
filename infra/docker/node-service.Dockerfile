@@ -36,4 +36,5 @@ COPY --from=build --chown=root:root /out ./
 COPY --from=build --chown=root:root /repo/migrations/${MIGRATIONS} ./migrations
 COPY --from=build --chown=root:root /repo/migrations/${EXTRA_MIGRATIONS} ./migrations-extra
 USER node
-CMD ["node", "dist/main.js"]
+# Tracing preload (libs/observability/src/register.ts): it must run before the ESM graph loads.
+CMD ["node", "--import", "@fraudstream/observability/register", "dist/main.js"]

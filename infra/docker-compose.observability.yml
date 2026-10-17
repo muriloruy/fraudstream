@@ -1,0 +1,59 @@
+# Observability stack (SPEC §10, §14.1), profile `observability`. Combine it with a Kafka
+# profile: `docker compose --profile core --profile observability up -d`.
+#
+#   Jaeger      http://localhost:16686  traces (OTLP in on 4317 gRPC / 4318 HTTP)
+#   Prometheus  http://localhost:9090   metrics, targets, alert rules
+#   Grafana     http://localhost:3100   provisioned dashboards (3000 is transaction-api)
+#   kafka-exporter                      consumer group lag and topic offsets
+
+services:
+  jaeger:
+    image: jaegertracing/jaeger:2.10.0
+    restart: unless-stopped
+    profiles: [observability]
+    ports:
+      - '16686:16686' # UI
+      - '4317:4317' # OTLP gRPC
+      - '4318:4318' # OTLP HTTP (what the services use)
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    profiles: [observability]
+    ports: ['9090:9090']
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    restart: unless-stopped
+    profiles: [observability]
+    ports: ['3100:3000']
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me}
+      # Local demo: dashboards are readable without logging in; editing needs the admin.
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on: [prometheus, jaeger]
+
+  # Consumer group lag via the Kafka admin API (SPEC §10). kafka-1 answers in both the
+  # core and lowmem profiles; the exporter discovers the other brokers from it.
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.9.0
+    restart: unless-stopped
+    profiles: [observability]
+    command: ['--kafka.server=kafka-1:9092', '--topic.filter=^[a-z].*', '--group.filter=.*']
+
+volumes:
+  prometheus-data:
+  grafana-data:

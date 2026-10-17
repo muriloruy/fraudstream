@@ -5,11 +5,19 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createPool, databaseIsReachable, type Pool } from '@fraudstream/db';
 import {
   HealthController,
+  httpMetrics,
+  METRICS_REGISTRY,
+  MetricsController,
   ProblemDetailsFilter,
   READINESS_CHECKS,
   type ReadinessCheck,
 } from '@fraudstream/http';
-import { loggerOptions, type DestinationStream } from '@fraudstream/observability';
+import {
+  createMetricsRegistry,
+  loggerOptions,
+  type DestinationStream,
+  type Registry,
+} from '@fraudstream/observability';
 import helmet from 'helmet';
 import { Logger, LoggerModule } from 'nestjs-pino';
 
@@ -39,9 +47,10 @@ export class AppModule implements OnApplicationShutdown {
           pinoHttp: logDestination ? [options, logDestination] : options,
         }),
       ],
-      controllers: [VaultController, HealthController],
+      controllers: [VaultController, HealthController, MetricsController],
       providers: [
         { provide: VAULT_CONFIG, useValue: config },
+        { provide: METRICS_REGISTRY, useFactory: () => createMetricsRegistry(SERVICE_NAME) },
         {
           provide: DB_POOL,
           useFactory: () =>
@@ -79,6 +88,7 @@ export async function createApp(
   app.useLogger(logger);
   app.use(helmet());
   app.disable('x-powered-by');
+  app.use(httpMetrics(app.get<Registry>(METRICS_REGISTRY)));
   app.useBodyParser('json', { limit: '16kb' });
   app.useGlobalFilters(new ProblemDetailsFilter(logger));
   app.enableShutdownHooks();

@@ -1,5 +1,6 @@
 import { pino, type DestinationStream, type Logger, type LoggerOptions } from 'pino';
 import { REDACT_PATHS, REDACTED } from '@fraudstream/security';
+import { logCorrelation } from './tracing.js';
 
 export interface LoggerConfig {
   service: string;
@@ -16,6 +17,8 @@ export function loggerOptions(config: Pick<LoggerConfig, 'service' | 'level'>): 
     timestamp: pino.stdTimeFunctions.isoTime,
     redact: { paths: [...REDACT_PATHS], censor: REDACTED },
     formatters: { level: (label) => ({ level: label }) },
+    // traceId / correlationId / transactionId of the message or request being handled.
+    mixin: logCorrelation,
   };
 }
 

@@ -1,13 +1,19 @@
 import {
   DlqHeaders,
   dlqTopic,
+  EventHeaders,
   RetryHeaders,
   retryTopic,
   TOPIC_CATALOGUE,
   type Envelope,
 } from '@fraudstream/contracts';
 import { withTransaction, type Pool, type PoolClient } from '@fraudstream/db';
-import type { Logger, Registry } from '@fraudstream/observability';
+import {
+  withConsumerSpan,
+  withLogFields,
+  type Logger,
+  type Registry,
+} from '@fraudstream/observability';
 import confluent from '@confluentinc/kafka-javascript';
 import type { KafkaJS } from '@confluentinc/kafka-javascript';
 import type { Kafka, Producer } from '../client.js';
@@ -21,7 +27,7 @@ import {
 import { decodeEvent, type EventDefinition } from './decode.js';
 import { classifyError, describeError, PermanentError } from './errors.js';
 import { Inbox } from './inbox.js';
-import { consumerMetrics, type ConsumerMetrics, type Outcome } from './metrics.js';
+import { consumerMetrics, OUTCOMES, type ConsumerMetrics, type Outcome } from './metrics.js';
 import {
   IN_PROCESS_DELAYS_MS,
   MAX_RETRY_ROUNDS,
@@ -143,6 +149,12 @@ export class ConsumerRuntime {
     this.sourceTopics = [...new Set(options.handlers.map((h) => h.event.topic))];
     this.retryTopics = new Map(this.sourceTopics.map((t) => [retryTopic(t, options.group), t]));
     this.metrics = options.registry ? consumerMetrics(options.registry) : undefined;
+    // Export every outcome at 0 from the start: `increase()` cannot see a series' first sample,
+    // so a counter born at 1 (the first DLQ message) would never show up in rates or alerts.
+    for (const topic of this.sourceTopics) {
+      for (const outcome of OUTCOMES)
+        this.metrics?.messages.inc({ topic, group: options.group, outcome }, 0);
+    }
 
     this.consumer = options.kafka.consumer({
       kafkaJS: {
@@ -252,12 +264,30 @@ export class ConsumerRuntime {
       }
     }
 
-    let outcome: Outcome;
-    try {
-      outcome = await this.process(topic, partition, message, headers);
-    } catch (error) {
-      outcome = await this.reroute(sourceTopic, topic, partition, message, headers, error);
-    }
+    // One CONSUMER span per message, child of the producer's span (SPEC §10): the handler's
+    // DB spans and the events it writes continue the transaction's trace.
+    const outcome = await withConsumerSpan(
+      `process ${sourceTopic}`,
+      incomingTraceparent(headers),
+      {
+        'messaging.system': 'kafka',
+        'messaging.operation.type': 'process',
+        'messaging.destination.name': sourceTopic,
+        'messaging.consumer.group.name': this.group,
+        'messaging.destination.partition.id': String(partition),
+        'messaging.kafka.offset': message.offset,
+        ...(headers[EventHeaders.correlationId]
+          ? { 'fraudstream.correlation_id': headers[EventHeaders.correlationId] }
+          : {}),
+      },
+      async (traceparent): Promise<Outcome> => {
+        try {
+          return await this.process(topic, partition, message, headers, traceparent);
+        } catch (error) {
+          return this.reroute(sourceTopic, topic, partition, message, headers, error);
+        }
+      },
+    );
 
     await this.commit(topic, partition, message.offset);
     this.metrics?.messages.inc({ topic: sourceTopic, group: this.group, outcome });
@@ -272,6 +302,7 @@ export class ConsumerRuntime {
     partition: number,
     message: KafkaMessage,
     headers: MessageHeaders,
+    spanTraceparent: string | undefined,
   ): Promise<Outcome> {
     const onTombstone = this.options.onTombstone;
     if (message.value === null && message.key !== null && onTombstone) {
@@ -284,8 +315,28 @@ export class ConsumerRuntime {
     const handler = this.handlers.get(definition);
     if (!handler)
       throw new PermanentError('unknown-event', `no handler for ${definition.eventType}`);
-    const traceparent = incomingTraceparent(headers);
+    const traceparent = spanTraceparent ?? incomingTraceparent(headers);
+    const { transactionId } = envelope.payload as { transactionId?: unknown };
 
+    return withLogFields(
+      {
+        correlationId: envelope.correlationId,
+        ...(typeof transactionId === 'string' ? { transactionId } : {}),
+      },
+      () =>
+        this.handleWithRetries(handler, envelope, topic, partition, message, headers, traceparent),
+    );
+  }
+
+  private handleWithRetries(
+    handler: EventHandler,
+    envelope: Envelope<unknown>,
+    topic: string,
+    partition: number,
+    message: KafkaMessage,
+    headers: MessageHeaders,
+    traceparent: string,
+  ): Promise<Outcome> {
     return retryInProcess(
       async () => {
         const committed: (() => void)[] = []; // fresh per attempt: a retried attempt's hooks never run

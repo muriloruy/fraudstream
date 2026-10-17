@@ -1,6 +1,7 @@
+import { EventHeaders } from '@fraudstream/contracts';
 import type { Pool, PoolClient } from '@fraudstream/db';
 import { sendMessages, type OutgoingMessage, type Producer } from '@fraudstream/kafka';
-import type { Logger } from '@fraudstream/observability';
+import { recordError, startProducerSpan, type Logger, type Span } from '@fraudstream/observability';
 import type { RelayMetrics } from './metrics.js';
 import { assertSchemaName } from './schema.js';
 
@@ -138,14 +139,18 @@ export class OutboxRelay {
       }
       const ids = rows.map((r) => r.id);
       const started = performance.now();
+      const { traced, spans } = withProducerSpans(rows);
       try {
-        for (const [topic, messages] of groupByTopic(rows)) {
+        for (const [topic, messages] of groupByTopic(traced)) {
           await sendMessages(this.options.producer, topic, messages);
         }
       } catch (error) {
+        for (const span of spans) recordError(span, error);
         await client.query(this.markFailedSql, [ids, describe(error)]);
         await client.query('COMMIT');
         throw error;
+      } finally {
+        for (const span of spans) span.end();
       }
       this.options.metrics?.publishDuration.observe(performance.now() - started);
       await client.query(this.markPublishedSql, [ids]);
@@ -216,6 +221,31 @@ export class OutboxRelay {
     this.leader = false;
     client.release();
   }
+}
+
+/**
+ * One PRODUCER span per row, child of the span that wrote the row (its stored `traceparent`);
+ * the message carries the publish span instead, so consumers hang under it (SPEC §10).
+ */
+function withProducerSpans(rows: readonly OutboxRow[]): { traced: OutboxRow[]; spans: Span[] } {
+  const spans: Span[] = [];
+  const traced = rows.map((row) => {
+    const { span, traceparent } = startProducerSpan(
+      `publish ${row.topic}`,
+      row.headers[EventHeaders.traceparent],
+      {
+        'messaging.system': 'kafka',
+        'messaging.operation.type': 'send',
+        'messaging.destination.name': row.topic,
+        'messaging.kafka.message.key': row.message_key,
+      },
+    );
+    spans.push(span);
+    return traceparent
+      ? { ...row, headers: { ...row.headers, [EventHeaders.traceparent]: traceparent } }
+      : row;
+  });
+  return { traced, spans };
 }
 
 function describe(error: unknown): string {

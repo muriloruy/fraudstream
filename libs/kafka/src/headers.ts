@@ -1,9 +1,15 @@
 import { randomBytes } from 'node:crypto';
 import { EventHeaders, type Envelope } from '@fraudstream/contracts';
+import { traceparentOf } from '@fraudstream/observability';
 
-/** A new W3C `traceparent` (version 00, sampled). OTel replaces this with the active span in M7. */
+/**
+ * The `traceparent` of the active span (an HTTP request, a consumed message), so what is
+ * published continues its trace; a new random root (version 00, sampled) when there is none.
+ */
 export function newTraceparent(): string {
-  return `00-${randomBytes(16).toString('hex')}-${randomBytes(8).toString('hex')}-01`;
+  return (
+    traceparentOf() ?? `00-${randomBytes(16).toString('hex')}-${randomBytes(8).toString('hex')}-01`
+  );
 }
 
 /** The standard headers every message carries (SPEC §4.2). */

@@ -1,0 +1,17 @@
+{
+  "name": "@fraudstream/observability-tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cross-service tracing test: one trace from the API to the decision (SPEC §10)",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "nx run-many -t build -p @fraudstream/card-vault @fraudstream/transaction-api @fraudstream/outbox-relay @fraudstream/fraud-rules @fraudstream/anomaly-scorer @fraudstream/decision-engine && vitest run --config vitest.int.config.ts"
+  },
+  "devDependencies": {
+    "@fraudstream/db": "workspace:*",
+    "@fraudstream/testing": "workspace:*"
+  }
+}
