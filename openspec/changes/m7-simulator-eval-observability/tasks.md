@@ -2,10 +2,10 @@
 
 ## 1. Simulator (SPEC §6.9)
 
-- [ ] 1.1 Scaffold `apps/simulator` CLI with seeded PRNG, test-BIN PAN generator (Luhn) and account/merchant model; unit tests for Luhn validity and distribution parameters
-- [ ] 1.2 `pnpm sim:seed --accounts N`: publish profiles and 30 days of compressed history via seed-only producer; integration test seeds 100 accounts and checks profiles materialized and baselines built
-- [ ] 1.3 `pnpm sim:run --tps --duration --fraud-rate` HTTP load with rate control and idempotency keys, writing `ground_truth.csv`; test that rate stays within ±5% at 100 tps for 30 s
-- [ ] 1.4 Scenarios `normal`, `card_testing`, `account_takeover`, `impossible_travel`, `merchant_compromise` with `--scenario`; unit tests on generated sequences for each scenario's defining properties
+- [x] 1.1 Scaffold `apps/simulator` CLI with seeded PRNG, test-BIN PAN generator (Luhn) and account/merchant model; unit tests for Luhn validity and distribution parameters
+- [x] 1.2 `pnpm sim:seed --accounts N`: publish profiles and 30 days of compressed history via seed-only producer; integration test seeds 100 accounts and checks profiles materialized and baselines built
+- [x] 1.3 `pnpm sim:run --tps --duration --fraud-rate` HTTP load with rate control and idempotency keys, writing `ground_truth.csv`; test that rate stays within ±5% at 100 tps for 30 s
+- [x] 1.4 Scenarios `normal`, `card_testing`, `account_takeover`, `impossible_travel`, `merchant_compromise` with `--scenario`; unit tests on generated sequences for each scenario's defining properties
 
 ## 2. Evaluation and tuning (SPEC §9)
 

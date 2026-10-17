@@ -330,6 +330,31 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
 
+  apps/simulator:
+    dependencies:
+      '@fraudstream/contracts':
+        specifier: workspace:*
+        version: link:../../libs/contracts
+      '@fraudstream/db':
+        specifier: workspace:*
+        version: link:../../libs/db
+      '@fraudstream/kafka':
+        specifier: workspace:*
+        version: link:../../libs/kafka
+      '@fraudstream/security':
+        specifier: workspace:*
+        version: link:../../libs/security
+    devDependencies:
+      '@fraudstream/anomaly-scorer':
+        specifier: workspace:*
+        version: link:../anomaly-scorer
+      '@fraudstream/fraud-rules':
+        specifier: workspace:*
+        version: link:../fraud-rules
+      '@fraudstream/testing':
+        specifier: workspace:*
+        version: link:../../libs/testing
+
   apps/transaction-api:
     dependencies:
       '@fraudstream/contracts':

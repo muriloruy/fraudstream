@@ -212,6 +212,9 @@ services:
       <<: *app-env
       PORT: '3000'
       VAULT_URL: http://card-vault:3001
+      # The code default stays 100/min per API key; the local stack allows the simulator
+      # (100-200 tx/s, SPEC §6.9) and the k6 load test (up to 500 tx/s, SPEC §11) through.
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60000}
     depends_on:
       postgres: { condition: service_healthy }
       card-vault: { condition: service_healthy }

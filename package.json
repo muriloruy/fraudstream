@@ -31,7 +31,9 @@
     "test:contracts": "pnpm --filter @fraudstream/contract-tests test",
     "ledger:reconcile": "pnpm --filter @fraudstream/ledger reconcile",
     "users:seed": "pnpm --filter @fraudstream/alerts-gateway seed",
-    "web:types": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/generate-web-types.ts"
+    "web:types": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/generate-web-types.ts",
+    "sim:seed": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source apps/simulator/src/main.ts seed",
+    "sim:run": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source apps/simulator/src/main.ts run"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
