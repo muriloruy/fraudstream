@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import {
   AccountProfileUpserted,
   createEnvelope,
@@ -140,6 +140,19 @@ export async function seed(producer: Producer, options: SeedOptions): Promise<Se
   return result;
 }
 
+/**
+ * Seed traffic is backfill: its trace context is marked not sampled (flags `00`), and every
+ * service's parent-based sampler follows that, so 250k historical transactions do not flood
+ * Jaeger or cost span overhead. Live traffic from `sim:run` is traced as usual.
+ */
+export function unsampledTraceparent(): string {
+  return `00-${randomBytes(16).toString('hex')}-${randomBytes(8).toString('hex')}-00`;
+}
+
 function message(key: string, envelope: Envelope<unknown>): OutgoingMessage {
-  return { key, value: JSON.stringify(envelope), headers: eventHeaders(envelope) };
+  return {
+    key,
+    value: JSON.stringify(envelope),
+    headers: eventHeaders(envelope, unsampledTraceparent()),
+  };
 }

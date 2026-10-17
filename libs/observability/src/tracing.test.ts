@@ -70,6 +70,17 @@ describe('with the SDK', () => {
     expect(downstream.given).toContain(consumer?.spanContext().spanId);
   });
 
+  it('records nothing for an unsampled parent and keeps it unsampled downstream (backfill)', async () => {
+    const unsampled = '00-1af7651916cd43dd8448eb211c80319c-c7ad6b7169203331-00';
+    const published = startProducerSpan('publish t', unsampled, {});
+    published.span.end();
+    const downstream = await withConsumerSpan('process t', published.traceparent, {}, (tp) =>
+      Promise.resolve(tp),
+    );
+    expect(downstream).toMatch(/^00-1af7651916cd43dd8448eb211c80319c-[0-9a-f]{16}-00$/);
+    expect(exporter.getFinishedSpans()).toHaveLength(0);
+  });
+
   it('marks a failed handler span as an error and rethrows', async () => {
     await expect(
       withConsumerSpan('process t', INCOMING, {}, () => Promise.reject(new Error('boom'))),

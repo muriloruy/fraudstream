@@ -125,6 +125,8 @@ describe('sim:seed (SPEC §6.9)', () => {
       );
       expect(envelope.producer).toBe(SEED_PRODUCER);
       expect(message.key).toBe(envelope.payload.accountId);
+      // Backfill is not traced: the trace context says not sampled.
+      expect(message.headers.traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-00$/);
       // A PAN never goes to Kafka: only the masked form of the card.
       expect(message.value).not.toContain(pans.get(envelope.payload.accountId));
       const times = byAccount.get(envelope.payload.accountId) ?? [];
