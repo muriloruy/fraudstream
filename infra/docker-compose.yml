@@ -143,7 +143,7 @@ services:
     restart: 'no'
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     restart: *restart
     profiles: [core, lowmem]
     ports: ['5432:5432']
