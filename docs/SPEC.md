@@ -1015,7 +1015,6 @@ Branch protection: PR required, CI green, conventional commits, CHANGELOG via re
 - [ ] AuthZ matrix tests.
 
 ### M6 — Frontend (4–5 days)
-- [ ] Figma file with 4 screens and tokens, linked in README.
 - [ ] Screens from section 8.2 implemented with Tailwind, responsive, dark mode, accessible.
 - [ ] Live updates via SSE; optimistic resolve.
 - [ ] Playwright main-flow test green.
@@ -1028,6 +1027,7 @@ Branch protection: PR required, CI green, conventional commits, CHANGELOG via re
 - [ ] `docs/perf.md` with EXPLAIN before/after on 10M+ rows and k6 results.
 - [ ] Chaos test passes: no loss, no duplicates, reconciliation clean.
 - [ ] All ADRs written; threat model; runbook (`docs/runbook.md`: how to replay DLQ, handle lag, rotate keys).
+- [ ] Figma file with 4 screens and tokens (moved from M6), linked in README and compared side by side in `docs/frontend.md`.
 - [ ] README final (section 19), with architecture diagram, GIF of the dashboard, trace screenshot, results tables.
 
 ### Stretch

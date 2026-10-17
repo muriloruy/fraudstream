@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The web application analysts use to monitor the platform in real time, triage fraud alerts and investigate accounts, implemented from the Figma design.
+The web application analysts use to monitor the platform in real time, triage fraud alerts and investigate accounts, built on shared design tokens.
 
 ## ADDED Requirements
 

@@ -28,7 +28,9 @@
 - [ ] 5.1 Write ADR-001 (Kafka vs RabbitMQ) and review ADR-002..009 against measured results (e.g. update ADR-003/004 with load numbers) so the index is complete
 - [ ] 5.2 Write `docs/security/threat-model.md` (STRIDE per service and data flow) and a code review checklist
 - [ ] 5.3 Complete `docs/runbook.md` (replay DLQ, handle lag, rotate keys, reset environment)
-- [ ] 5.4 Final `README.md` following SPEC §19: pitch + badges, dashboard GIF, Mermaid architecture, Kafka/Security/DB/Fraud/Performance sections with links to code, PCI DSS disclaimer, quick start, Figma link + screenshots, ADR index, "what I would do next"
+- [ ] 5.4 (moved from M6 1.1) Create the Figma file: import `docs/frontend/tokens-studio.json` with Tokens Studio (on the free plans each token set becomes its own collection — `light`, `dark`, `spacing`, `fontSizes` — with one mode each); build the 4 screens + Login in light and dark; share by view-only link
+- [ ] 5.5 (moved from M6 3.6) Add the Figma column to the screens table in `docs/frontend.md` (`docs/frontend/figma-<screen>-<theme>.png`) and update its Design note (collections instead of modes)
+- [ ] 5.6 Final `README.md` following SPEC §19: pitch + badges, dashboard GIF, Mermaid architecture, Kafka/Security/DB/Fraud/Performance sections with links to code, PCI DSS disclaimer, quick start, Figma link + screenshots, ADR index, "what I would do next"
 
 ## 6. Verification
 
