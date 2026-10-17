@@ -11,6 +11,7 @@ The project's claims — throughput, latency, no loss, no duplicates, query opti
 - Chaos test: kill one broker, one `fraud-rules` replica and `ledger` during load; reconciliation must be clean (SPEC §13.6).
 - Horizontal scaling check with 3 `fraud-rules` replicas and 100k backlog recovery (SPEC §11).
 - Remaining CI security jobs: CodeQL, `pnpm audit`, gitleaks, Trivy; multi-stage non-root Docker images (SPEC §15).
+- Figma file mirroring the design tokens, with the 4 screens + Login in light/dark, compared side by side with the implementation (moved from M6; SPEC §8.1).
 - Docs: all ADRs 001–009, `docs/security/threat-model.md` (STRIDE), `docs/runbook.md`, final README per SPEC §19 with PCI DSS disclaimer.
 
 ## Capabilities

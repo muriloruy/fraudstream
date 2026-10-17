@@ -1,10 +1,9 @@
-# Spec Delta
+# analyst-dashboard Specification
 
 ## Purpose
+The web application analysts use to monitor the platform in real time, triage fraud alerts and investigate accounts, built on shared design tokens.
 
-The web application analysts use to monitor the platform in real time, triage fraud alerts and investigate accounts, implemented from the Figma design.
-
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Login screen
 The app SHALL provide a login form with field validation, error states and a lockout message, and SHALL keep the access token only in memory, renewing it via the refresh cookie.

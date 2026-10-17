@@ -16,8 +16,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/main.js",
-    "dev": "nx run @fraudstream/alerts-gateway:build && node --env-file-if-exists=../../.env dist/main.js",
+    "start": "node --import @fraudstream/observability/register dist/main.js",
+    "dev": "nx run @fraudstream/alerts-gateway:build && node --env-file-if-exists=../../.env --import @fraudstream/observability/register dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",

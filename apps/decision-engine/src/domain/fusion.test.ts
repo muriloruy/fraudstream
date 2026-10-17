@@ -48,7 +48,7 @@ describe('decide (SPEC §6.6)', () => {
     expect(outcome).toMatchObject({
       decision: 'DECLINE',
       finalScore: 0.1,
-      reasons: ['R006 rule_R006'],
+      reasons: ['card testing: several small purchases within minutes (R006)'],
     });
   });
 
@@ -71,7 +71,13 @@ describe('decide (SPEC §6.6)', () => {
     expect(() => decide(null, null, cfg)).toThrow();
   });
 
-  it('explains anomalies in plain language', () => {
+  it('keeps unknown rules readable by id and name', () => {
+    expect(decide(rules(0.2, false, ['R999']), score(0.1), cfg).reasons).toEqual([
+      'R999 rule_R999',
+    ]);
+  });
+
+  it('explains rules and anomalies in plain language (SPEC §9.3)', () => {
     const outcome = decide(
       rules(0.3, false, ['R001']),
       score(0.81, 143, {
@@ -83,7 +89,7 @@ describe('decide (SPEC §6.6)', () => {
       cfg,
     );
     expect(outcome.reasons).toEqual([
-      'R001 rule_R001',
+      'many transactions in the last minute (R001)',
       'amount 4.2σ above baseline',
       'transactions much closer together than usual',
       'unusual time of day for this account',

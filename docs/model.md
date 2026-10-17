@@ -62,4 +62,13 @@ When an analyst confirms fraud (`fraud.analyst-feedback.v1`, `CONFIRMED_FRAUD`),
 
 ## Evaluation
 
-To be filled by `pnpm eval` in M7: precision, recall and F1 per simulator scenario, against the targets of SPEC §9.2.
+`pnpm eval` joins `simulator_output/ground_truth.csv` (written by `pnpm sim:run`) with `decision.decisions`, read through the read-only `reconciler` role, and appends one table per run below (SPEC §9.1).
+
+- A transaction is **flagged** when the decision is REVIEW or DECLINE.
+- **Recall** of a scenario = flagged / decided transactions of that scenario.
+- **Precision** of a fraud scenario = its flagged transactions against every flagged normal one, i.e. the precision of a stream where this scenario is the only fraud. The `all fraud` row is the detector's actual precision on the run.
+- **FP rate** = flagged / decided normal transactions (target ≤ 3%, SPEC §9.2). The legitimate home purchase that precedes an `impossible_travel` attack is labeled normal.
+- Transactions in the ground truth **without a decision yet** are listed separately and left out of the rates, never counted as negatives.
+- Each table records the model version, the ruleset version (`rules.yaml`) and the decision `config_version`. Seed (history) decisions are not in the ground truth, so they never count.
+
+The script exits 1 when a SPEC §9.2 target is missed. Use `--no-write` to only print, and `--title` to name the run.

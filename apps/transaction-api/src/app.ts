@@ -13,6 +13,9 @@ import { ConsumerGroups, FraudDecisionMade, Topics } from '@fraudstream/contract
 import { createPool, databaseIsReachable, type Pool } from '@fraudstream/db';
 import {
   HealthController,
+  httpMetrics,
+  METRICS_REGISTRY,
+  MetricsController,
   ProblemDetailsFilter,
   READINESS_CHECKS,
   type ReadinessCheck,
@@ -26,7 +29,12 @@ import {
   type Kafka,
   type Producer,
 } from '@fraudstream/kafka';
-import { loggerOptions, type DestinationStream } from '@fraudstream/observability';
+import {
+  createMetricsRegistry,
+  loggerOptions,
+  type DestinationStream,
+  type Registry,
+} from '@fraudstream/observability';
 import { OutboxWriter } from '@fraudstream/outbox';
 import helmet from 'helmet';
 import { Logger, LoggerModule } from 'nestjs-pino';
@@ -76,9 +84,10 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown 
             typeof req.apiKeyId === 'string' ? req.apiKeyId : 'anonymous',
         }),
       ],
-      controllers: [TransactionsController, HealthController],
+      controllers: [TransactionsController, HealthController, MetricsController],
       providers: [
         { provide: API_CONFIG, useValue: config },
+        { provide: METRICS_REGISTRY, useFactory: () => createMetricsRegistry(SERVICE_NAME) },
         {
           provide: DB_POOL,
           useFactory: () =>
@@ -97,12 +106,13 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown 
           // The API owns payments.transactions, so it applies decisions to it itself
           // (SPEC §3.3 step 8), through the idempotent consumer runtime.
           provide: STATUS_CONSUMER,
-          inject: [DB_POOL, KAFKA, PRODUCER, TRANSACTIONS_REPOSITORY],
+          inject: [DB_POOL, KAFKA, PRODUCER, TRANSACTIONS_REPOSITORY, METRICS_REGISTRY],
           useFactory: (
             pool: Pool,
             kafka: Kafka,
             producer: Producer,
             transactions: TransactionsRepository,
+            registry: Registry,
           ) =>
             new ConsumerRuntime({
               kafka,
@@ -110,6 +120,7 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown 
               producer,
               group: ConsumerGroups.transactionApiStatus,
               schema: 'payments',
+              registry,
               handlers: [
                 on(FraudDecisionMade, async (envelope, ctx) => {
                   await transactions.applyDecision(ctx.tx, envelope.payload);
@@ -193,6 +204,7 @@ export async function createApp(
   app.useLogger(logger);
   app.use(helmet());
   app.disable('x-powered-by');
+  app.use(httpMetrics(app.get<Registry>(METRICS_REGISTRY)));
   // Server-to-server API: CORS stays closed unless origins are explicitly allowed.
   if (config.corsOrigins.length > 0) app.enableCors({ origin: config.corsOrigins });
   app.useBodyParser('json', { limit: '16kb' });

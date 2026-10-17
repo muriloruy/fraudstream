@@ -1,6 +1,7 @@
 import { Counter, Histogram, type Registry } from '@fraudstream/observability';
 
-export type Outcome = 'ok' | 'duplicate' | 'retry' | 'dlq';
+export const OUTCOMES = ['ok', 'duplicate', 'retry', 'dlq'] as const;
+export type Outcome = (typeof OUTCOMES)[number];
 
 export interface ConsumerMetrics {
   messages: Counter<'topic' | 'group' | 'outcome'>;

@@ -2,7 +2,8 @@
 
 ## 1. Design (SPEC §8.1)
 
-- [ ] 1.1 (pending, owner: user — tokens-in-code first, see docs/frontend.md; import docs/frontend/tokens-studio.json) Create the Figma file with tokens (colors, spacing, type scale) as variables and the 4 screens + Login, including dark mode variants; verify the link is added to `README.md`
+> 1.1 — moved to M8 (`m8-performance-chaos-docs` task 5.4). Tokens-in-code first; `docs/frontend/tokens-studio.json` is the import source.
+
 - [x] 1.2 Export tokens to `apps/web/src/styles/tokens.ts` and map them in `tailwind.config.ts`; verify a token change propagates to a sample component
 
 ## 2. App foundation (SPEC §8.3)
@@ -20,7 +21,8 @@
 - [x] 3.3 Alert Queue: table, filters, sorting, keyset load more, real-time insert with highlight and "N new alerts" counter; tests for filters and the counter behavior
 - [x] 3.4 Alert Detail: transaction card, score breakdown charts, mini-timeline, Assign/Confirm/Legitimate with required note and optimistic update + rollback; tests for rollback and note validation
 - [x] 3.5 Account Timeline: profile, baseline stats, history, balance; test with mocked API data
-- [ ] 3.6 (implementation screenshots done in docs/frontend.md; Figma column pending 1.1) Side-by-side screenshots (Figma vs implementation) in `docs/frontend.md`
+
+> 3.6 — implementation screenshots done in `docs/frontend.md`; the Figma column moved to M8 (`m8-performance-chaos-docs` task 5.5).
 
 ## 4. Delivery and quality
 
@@ -30,7 +32,7 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green; tick every M6 acceptance item in SPEC §17
+- [x] 5.1 Run `pnpm lint && pnpm typecheck && pnpm test`; CI green; tick every M6 acceptance item in SPEC §17
 
 ## Workflow follow-up
 

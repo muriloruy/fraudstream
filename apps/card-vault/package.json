@@ -21,8 +21,8 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/main.js",
-    "dev": "nx run @fraudstream/card-vault:build && node --env-file-if-exists=../../.env dist/main.js",
+    "start": "node --import @fraudstream/observability/register dist/main.js",
+    "dev": "nx run @fraudstream/card-vault:build && node --env-file-if-exists=../../.env --import @fraudstream/observability/register dist/main.js",
     "rotate": "tsx --tsconfig ../../tsconfig.runtime.json --conditions=@fraudstream/source src/rotate.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",

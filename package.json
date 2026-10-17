@@ -31,14 +31,19 @@
     "test:contracts": "pnpm --filter @fraudstream/contract-tests test",
     "ledger:reconcile": "pnpm --filter @fraudstream/ledger reconcile",
     "users:seed": "pnpm --filter @fraudstream/alerts-gateway seed",
-    "web:types": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/generate-web-types.ts"
+    "web:types": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/generate-web-types.ts",
+    "sim:seed": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source apps/simulator/src/main.ts seed",
+    "sim:run": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source apps/simulator/src/main.ts run",
+    "eval": "tsx --tsconfig tsconfig.runtime.json --conditions=@fraudstream/source scripts/eval.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
     "@eslint/js": "10.0.1",
+    "@fraudstream/anomaly-scorer": "workspace:*",
     "@fraudstream/db": "workspace:*",
     "@fraudstream/kafka": "workspace:*",
+    "@fraudstream/simulator": "workspace:*",
     "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",
     "@vitest/coverage-v8": "5.0.4",

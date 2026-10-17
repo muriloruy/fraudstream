@@ -39,6 +39,18 @@ const UPSERT_SCORE = `
   ON CONFLICT (transaction_id) DO UPDATE SET anomaly_score = EXCLUDED.anomaly_score
   RETURNING transaction_id, account_id, rule_result, anomaly_score`;
 
+/**
+ * Requests older than this when decided are backfill, not live traffic: the simulator's
+ * 30-day seed history or a DLQ replay. Their decisions count, but their "latency" (days)
+ * would swamp `decision_latency_seconds` and fire the p95 alert, so it is not observed.
+ * Still far above any real backlog (SPEC §11: 100k messages drain in < 2 min).
+ */
+export const LIVE_LATENCY_LIMIT_MS = 60 * 60 * 1000;
+
+export function isLiveLatency(latencyMs: number): boolean {
+  return latencyMs < LIVE_LATENCY_LIMIT_MS;
+}
+
 /** The analyst-facing explanation of a decision (rule points, features, weights, thresholds). */
 export function toBreakdown(
   rules: FraudRulesEvaluatedV1 | null,
@@ -220,6 +232,6 @@ export class Decider {
       traceparent: cause.traceparent,
     });
     this.decisions.inc({ decision: outcome.decision });
-    this.latency.observe(event.latencyMs / 1000);
+    if (isLiveLatency(event.latencyMs)) this.latency.observe(event.latencyMs / 1000);
   }
 }

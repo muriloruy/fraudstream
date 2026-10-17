@@ -1,0 +1,30 @@
+{
+  "name": "@fraudstream/simulator",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Labeled payment traffic generator with fraud scenarios and ground truth (SPEC §6.9)",
+  "type": "module",
+  "exports": {
+    "./evaluation": {
+      "@fraudstream/source": "./src/evaluation/metrics.ts",
+      "default": "./src/evaluation/metrics.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:integration": "nx run-many -t build -p @fraudstream/fraud-rules @fraudstream/anomaly-scorer && vitest run --config vitest.int.config.ts"
+  },
+  "dependencies": {
+    "@fraudstream/contracts": "workspace:*",
+    "@fraudstream/db": "workspace:*",
+    "@fraudstream/kafka": "workspace:*",
+    "@fraudstream/security": "workspace:*"
+  },
+  "devDependencies": {
+    "@fraudstream/anomaly-scorer": "workspace:*",
+    "@fraudstream/fraud-rules": "workspace:*",
+    "@fraudstream/testing": "workspace:*"
+  }
+}

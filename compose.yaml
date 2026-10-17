@@ -4,3 +4,5 @@ name: fraudstream
 include:
   - path: infra/docker-compose.yml
     env_file: .env
+  - path: infra/docker-compose.observability.yml
+    env_file: .env
