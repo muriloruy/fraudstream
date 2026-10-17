@@ -4,6 +4,12 @@
   "private": true,
   "description": "Labeled payment traffic generator with fraud scenarios and ground truth (SPEC §6.9)",
   "type": "module",
+  "exports": {
+    "./evaluation": {
+      "@fraudstream/source": "./src/evaluation/metrics.ts",
+      "default": "./src/evaluation/metrics.ts"
+    }
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",

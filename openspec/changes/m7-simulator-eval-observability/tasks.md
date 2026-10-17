@@ -9,7 +9,7 @@
 
 ## 2. Evaluation and tuning (SPEC §9)
 
-- [ ] 2.1 `scripts/eval.ts` + `pnpm eval`: metrics per scenario, undecided transactions listed separately, Markdown output into `docs/model.md`; unit tests for the metric math on a fixed confusion matrix
+- [x] 2.1 `scripts/eval.ts` + `pnpm eval`: metrics per scenario, undecided transactions listed separately, Markdown output into `docs/model.md`; unit tests for the metric math on a fixed confusion matrix
 - [ ] 2.2 Run the reference simulation and tune `rules.yaml`, anomaly parameters and decision thresholds until SPEC §9.2 targets are met; record each iteration in `docs/model.md`
 - [ ] 2.3 Add plain-language reason mapping review for explainability (SPEC §9.3); verify reasons shown for each scenario in the eval sample
 
