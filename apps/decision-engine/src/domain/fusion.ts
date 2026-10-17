@@ -45,6 +45,30 @@ export interface Outcome {
 
 const round4 = (x: number) => Math.round(x * 10_000) / 10_000;
 
+/**
+ * What each rule of SPEC §6.4 means for an analyst (SPEC §9.3). Thresholds live in the
+ * ruleset (rules.yaml), so the wording names the pattern, not the numbers; the rule id stays
+ * at the end for whoever needs to look the rule up.
+ */
+const RULE_REASONS: ReadonlyMap<string, string> = new Map([
+  ['R001', 'many transactions in the last minute'],
+  ['R002', 'high spend in the last hour for the credit limit'],
+  ['R003', "amount far above the account's 30-day average"],
+  ['R004', 'impossible travel: previous purchase in another country too recently'],
+  ['R005', "merchant outside the account's home country"],
+  ['R006', 'card testing: several small purchases within minutes'],
+  ['R007', 'high amount at a merchant new to the account'],
+  ['R008', 'merchant, category or card range on the blocklist'],
+  ['R009', 'high amount at night (merchant local time)'],
+  ['R010', 'amount above the credit limit'],
+]);
+
+/** A fired rule in plain language, e.g. `card testing: ... (R006)`. */
+export function ruleReason(rule: { ruleId: string; name: string }): string {
+  const text = RULE_REASONS.get(rule.ruleId);
+  return text ? `${text} (${rule.ruleId})` : `${rule.ruleId} ${rule.name}`;
+}
+
 /** Plain-language reasons shown to analysts (SPEC §9.3). */
 export function anomalyReasons(s: ScorePart, minBaseline: number): string[] {
   const reasons: string[] = [];
@@ -72,7 +96,7 @@ export function decide(
 ): Outcome {
   if (!rules && !score) throw new Error('nothing to decide on');
   const reasons = [
-    ...(rules?.firedRules.map((r) => `${r.ruleId} ${r.name}`) ?? []),
+    ...(rules?.firedRules.map(ruleReason) ?? []),
     ...(score ? anomalyReasons(score, cfg.minBaseline) : []),
   ];
   const components = {

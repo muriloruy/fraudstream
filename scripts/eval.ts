@@ -16,6 +16,7 @@ import {
   evaluate,
   parseGroundTruth,
   toMarkdown,
+  topReasons,
   type Decision,
 } from '@fraudstream/simulator/evaluation';
 
@@ -39,17 +40,24 @@ const url = process.env.DATABASE_URL_RECONCILER;
 if (!url) throw new Error('DATABASE_URL_RECONCILER is not set (see .env.example)');
 const pool = createPool({ connectionString: url, applicationName: 'eval' });
 const decisions = new Map<string, Decision>();
+const explained = new Map<string, { decision: Decision; reasons: string[] }>();
 const configVersions = new Set<string>();
 try {
   const ids = truth.map((t) => t.transactionId);
   for (let i = 0; i < ids.length; i += 5000) {
-    const { rows } = await pool.query<{ id: string; decision: Decision; config_version: string }>(
-      `SELECT transaction_id::text AS id, decision, config_version
+    const { rows } = await pool.query<{
+      id: string;
+      decision: Decision;
+      reasons: string[];
+      config_version: string;
+    }>(
+      `SELECT transaction_id::text AS id, decision, reasons, config_version
          FROM decisions WHERE transaction_id = ANY($1::uuid[])`,
       [ids.slice(i, i + 5000)],
     );
     for (const row of rows) {
       decisions.set(row.id, row.decision);
+      explained.set(row.id, { decision: row.decision, reasons: row.reasons });
       configVersions.add(row.config_version);
     }
   }
@@ -67,6 +75,7 @@ const markdown = toMarkdown(report, {
       ([...configVersions].map((v) => `\`${v}\``).join(', ') || '—'),
     `${truth.length} labeled transactions from \`${values['ground-truth']}\``,
   ],
+  reasons: topReasons(truth, explained),
 });
 console.log(markdown);
 

@@ -149,10 +149,51 @@ export function checkTargets(report: EvaluationReport): TargetCheck[] {
   ];
 }
 
+export interface ReasonShare {
+  reason: string;
+  /** Share of the scenario's flagged transactions that carry this reason. */
+  share: number;
+}
+
+/**
+ * The most frequent decision reasons per scenario among flagged transactions, to review that
+ * each attack is explained in plain language (SPEC §9.3). Anomaly reasons embed numbers
+ * ("amount 4.2σ above baseline"), so digits are generalized before counting.
+ */
+export function topReasons(
+  truth: readonly GroundTruth[],
+  decisions: ReadonlyMap<string, { decision: Decision; reasons: readonly string[] }>,
+  limit = 3,
+): Map<Scenario, ReasonShare[]> {
+  const result = new Map<Scenario, ReasonShare[]>();
+  for (const scenario of SCENARIOS) {
+    const flagged = truth
+      .filter((t) => t.scenario === scenario)
+      .map((t) => decisions.get(t.transactionId))
+      .filter((d) => d !== undefined && d.decision !== 'APPROVE');
+    if (flagged.length === 0) continue;
+    const counts = new Map<string, number>();
+    for (const d of flagged) {
+      for (const reason of new Set(d?.reasons.map((r) => r.replace(/\d+\.\d+/g, 'N')))) {
+        counts.set(reason, (counts.get(reason) ?? 0) + 1);
+      }
+    }
+    result.set(
+      scenario,
+      [...counts]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([reason, n]) => ({ reason, share: n / flagged.length })),
+    );
+  }
+  return result;
+}
+
 export interface ReportMeta {
   title: string;
   /** e.g. model, ruleset and decision config versions, run parameters. */
   details: readonly string[];
+  reasons?: ReadonlyMap<Scenario, readonly ReasonShare[]>;
 }
 
 const pct = (x: number | null) => (x === null ? '—' : `${(x * 100).toFixed(1)}%`);
@@ -180,6 +221,14 @@ export function toMarkdown(report: EvaluationReport, meta: ReportMeta): string {
         `- ${t.met ? '✅' : '❌'} ${t.label}: ${t.label.startsWith('false') ? pct(t.value) : dec(t.value)} (target ${t.target})`,
     ),
   ];
+  if (meta.reasons && meta.reasons.size > 0) {
+    lines.push('', 'Top reasons of flagged transactions (SPEC §9.3):', '');
+    lines.push('| Scenario | Reasons (share of flagged) |', '| --- | --- |');
+    for (const [scenario, shares] of meta.reasons) {
+      const text = shares.map((s) => `${s.reason} (${pct(s.share)})`).join('; ');
+      lines.push(`| ${scenario} | ${text} |`);
+    }
+  }
   if (report.undecided.length > 0) {
     const shown = report.undecided
       .slice(0, 10)

@@ -5,6 +5,7 @@ import {
   evaluate,
   parseGroundTruth,
   toMarkdown,
+  topReasons,
   type Decision,
   type GroundTruth,
 } from './metrics.js';
@@ -109,6 +110,40 @@ describe('evaluate (SPEC §9.1)', () => {
     expect(md).toContain('| card_testing | 105 | 100 | 0.750 | 0.900 |');
     expect(md).toContain('✅ false positive rate normal: 3.0% (target ≤ 3.0%)');
     expect(md).toContain('Undecided (no decision yet, excluded from the rates): 5');
+  });
+});
+
+describe('topReasons (SPEC §9.3)', () => {
+  it('ranks the reasons of flagged transactions per scenario, ignoring approved ones', () => {
+    const truth: GroundTruth[] = [
+      { transactionId: 'a', isFraud: true, scenario: 'account_takeover' },
+      { transactionId: 'b', isFraud: true, scenario: 'account_takeover' },
+      { transactionId: 'c', isFraud: true, scenario: 'account_takeover' },
+      { transactionId: 'd', isFraud: false, scenario: 'normal' },
+    ];
+    const decisions = new Map([
+      ['a', { decision: 'REVIEW' as const, reasons: ['amount 4.2σ above baseline', 'x (R007)'] }],
+      ['b', { decision: 'DECLINE' as const, reasons: ['amount 6.8σ above baseline'] }],
+      ['c', { decision: 'APPROVE' as const, reasons: ['x (R007)'] }],
+      ['d', { decision: 'APPROVE' as const, reasons: [] }],
+    ]);
+    const top = topReasons(truth, decisions);
+    expect(top.get('account_takeover')).toEqual([
+      { reason: 'amount Nσ above baseline', share: 1 },
+      { reason: 'x (R007)', share: 0.5 },
+    ]);
+    expect(top.has('normal')).toBe(false);
+    const md = toMarkdown(
+      evaluate(truth, new Map([...decisions].map(([k, v]) => [k, v.decision]))),
+      {
+        title: 't',
+        details: [],
+        reasons: top,
+      },
+    );
+    expect(md).toContain(
+      '| account_takeover | amount Nσ above baseline (100.0%); x (R007) (50.0%) |',
+    );
   });
 });
 

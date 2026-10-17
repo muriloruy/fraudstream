@@ -17,8 +17,8 @@ groups:
         expr: sum by (topic) (increase(kafka_topic_partition_current_offset{topic=~".+\\.dlq"}[5m])) > 0
         labels: { severity: warning }
         annotations:
-          summary: '{{ $value }} message(s) sent to {{ $labels.topic }} in the last 5 minutes'
-          runbook: docs/runbook.md#dead-letter-queue
+          summary: 'About {{ printf "%.0f" $value }} message(s) sent to {{ $labels.topic }} in the last 5 minutes'
+          runbook: docs/runbook.md#dead-letter-messages
 
       - alert: OutboxStalled
         expr: max by (app, schema) (outbox_oldest_unpublished_seconds) > 30
