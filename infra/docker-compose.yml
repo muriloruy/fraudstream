@@ -165,7 +165,7 @@ services:
       retries: 20
 
   kafka-ui:
-    image: kafbat/kafka-ui:v1.4.2
+    image: kafbat/kafka-ui:v1.5.0
     restart: *restart
     profiles: [core, lowmem]
     ports: ['8080:8080']
