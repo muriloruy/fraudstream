@@ -127,13 +127,19 @@ services:
     healthcheck: *kafka-healthcheck
 
   # One-shot: creates every topic of SPEC §4.1 from kafka/topics.conf, then exits 0.
-  # Replication factor and min.insync.replicas are derived from the live broker count.
+  # Shared by both profiles. Replication factor and min.insync.replicas follow the number of
+  # brokers the cluster is meant to have, read from its KRaft voter set (3 in core, 1 in
+  # lowmem), and the script waits until that many brokers are registered: with
+  # `required: false` below it can start while a core broker is still joining, and must
+  # never fall back to RF=1. EXPECTED_BROKERS overrides the voter-set count.
   init-topics:
     image: *kafka-image
     profiles: [core, lowmem]
     entrypoint: ['/bin/bash', '/infra/kafka/init-topics.sh']
     environment:
       BOOTSTRAP_SERVERS: kafka-1:9092
+      EXPECTED_BROKERS: ${EXPECTED_BROKERS:-}
+      BROKER_WAIT_TIMEOUT: '180'
     volumes: ['./kafka:/infra/kafka:ro']
     depends_on:
       kafka-1: { condition: service_healthy, required: false }
