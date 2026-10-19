@@ -17,7 +17,7 @@ services:
       - '4318:4318' # OTLP HTTP (what the services use)
 
   prometheus:
-    image: prom/prometheus:v3.5.0
+    image: prom/prometheus:v3.15.0
     restart: unless-stopped
     profiles: [observability]
     ports: ['9090:9090']
